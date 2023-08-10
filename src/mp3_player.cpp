@@ -13,14 +13,12 @@ int main()
 
     getchar();
 
-    puts("Hallo Sojetza");
-
     filemanager.initSd();
     puts("filemanager initted");
     player.init();
     puts("player initted");
 
-    player.play("bbng_full.mp3");
+    player.play("bbng.mp3");
     puts("play started!");
 
     while (!player.isFinished()) {

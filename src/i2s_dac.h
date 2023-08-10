@@ -17,7 +17,7 @@ void __isr __time_critical_func(dma_handler)() {
     dma_hw->ints0 = 1u << dma_channel;
     int16_t* block = audiobuffer.getNextDmaBlock();
     uint now = time_us_32();
-    printf("dma! ms since last: %i\n", (int)(now-lastDma)/1000);
+    printf("dma! ms since last: %i\n", (int)(now-lastDma));
     lastDma = now;
     if (block) {
         dma_channel_transfer_from_buffer_now(dma_channel, block, config::AUDIOBUFFER_SIZE / 2);
@@ -71,6 +71,7 @@ void init_pio(int pin_clk, int pin_data) {
     dma_channel_config dma_config = dma_channel_get_default_config(dma_channel);
     channel_config_set_dreq(&dma_config, DREQ_PIO0_TX0);
     channel_config_set_transfer_data_size(&dma_config, DMA_SIZE_32);
+    channel_config_set_high_priority(&dma_config, true);
     dma_channel_configure(dma_channel,
                           &dma_config,
                           &pio->txf[sm], //dest is sm 0
@@ -79,6 +80,7 @@ void init_pio(int pin_clk, int pin_data) {
                           false //trigger
     );
     irq_set_exclusive_handler(DMA_IRQ_0, dma_handler);
+    irq_set_priority(DMA_IRQ_0, 0);
     puts("dma handler set");
     
     dma_channel_set_irq0_enabled(dma_channel, true);

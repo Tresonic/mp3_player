@@ -6,6 +6,8 @@
 #include "filemanager.h"
 #include "i2s_dac.h"
 
+#include "bbng.h"
+
 using namespace libmad;
 
 class Player {
@@ -26,16 +28,25 @@ public:
             return;
         int w = audiobuffer.getNumWritableSamples();
         // printf("availableSamples %i\n", w);
-        if (w < config::FILE_BUF_SIZE * 4) {
+        if (w < config::FILE_BUF_SIZE * 8) {
             return;
         }
         absolute_time_t bef = get_absolute_time();
-        int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, sizeof(mFilebuffer));
+        int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, config::FILE_BUF_SIZE);
         int diff = absolute_time_diff_us(bef, get_absolute_time()) / 1000;
         printf("bytes read: %u; read time: %i\n", readBytes, diff);
-        mp3.write(mFilebuffer, readBytes);
-        if (readBytes < sizeof(mFilebuffer))
+
+        // mp3.write(mFilebuffer, readBytes);
+        // if (readBytes < sizeof(mFilebuffer))
+        //     stop();
+
+        sleep_ms(15);
+        static int idx = 0;
+        mp3.write(&bbng_mp3[idx], config::FILE_BUF_SIZE);
+        idx += config::FILE_BUF_SIZE;
+        if(idx > sizeof(bbng_mp3))
             stop();
+
     }
 
     void play(const char* file)
@@ -86,4 +97,4 @@ private:
     int mFp;
 };
 
-Player player;
+static Player player;

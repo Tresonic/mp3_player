@@ -27,9 +27,13 @@ public:
     }
 
     int writeSamples(int16_t* src, int maxSamples) {
+        const uint8_t vol = 255;
         int n = min(maxSamples, getNumWritableSamples());
         for (int i=0; i<n; ++i) {
+            // mBuffer[mWrIdx++] = ((int)src[i])*vol >> 8;
             mBuffer[mWrIdx++] = src[i];
+            // if (src[i])
+            //     printf("%i\n", (int)src[i]);
             if (mWrIdx >= count_of(mBuffer)) {
                 mWrIdx = 0;
             }
@@ -47,9 +51,10 @@ public:
             puts("dma overtook write!!!");
             return NULL;
         }
-        printf("new dma block: %i\n", newLockedBuffer);
+        // printf("new dma block: %i\n", newLockedBuffer);
         mDmaLockedBuffer = newLockedBuffer;
-        return &mBuffer[mDmaLockedBuffer*AUDIOBUFFER_SIZE];
+        int idx = mDmaLockedBuffer > 0 ? mDmaLockedBuffer*AUDIOBUFFER_SIZE - 1 : 0;
+        return &mBuffer[idx];
     }
 private:
     int16_t mBuffer[AUDIOBUFFER_NUM * AUDIOBUFFER_SIZE];

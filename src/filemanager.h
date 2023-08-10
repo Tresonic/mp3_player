@@ -3,12 +3,26 @@
 #include "f_util.h"
 #include "ff.h"
 #include "pico/stdlib.h"
+#include "pico/multicore.h"
 #include "rtc.h"
 
 #include "config.h"
 #include "hw_config.h"
 
 using config::MAX_OPEN_FILES;
+
+int _handle, _numBytes;
+uint _bytesRead;
+void* _buffer;
+FIL* _file;
+
+void core1FileRead() {
+    while (true) {
+        multicore_fifo_pop_blocking();
+        f_read(_file, _buffer, _numBytes, &_bytesRead);
+        multicore_fifo_push_blocking(2);
+    }
+}
 
 class Filemanager {
 public:
@@ -21,7 +35,9 @@ public:
         FRESULT fr = f_mount(&mSD->fatfs, mSD->pcName, 1);
         if (FR_OK != fr)
             panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
-        puts("mounted!");
+
+        multicore_launch_core1(core1FileRead);
+        puts("mounted! and core started");
     }
 
     void deinitSd() {
@@ -56,10 +72,14 @@ public:
             return -1;
         }
 
-        uint bytesRead;
-        f_read(&mFiles[handle], buffer, numBytes, &bytesRead);
+        // uint bytesRead;
+        // f_read(&mFiles[handle], buffer, numBytes, &bytesRead);
+        _handle = handle; _buffer = buffer; _numBytes = numBytes; _file = &mFiles[handle];
+        multicore_fifo_push_blocking(1);
+        multicore_fifo_pop_blocking();
 
-        return bytesRead;
+
+        return _bytesRead;
     }
 
     int readDirectoryToBuffer() {
@@ -68,6 +88,7 @@ public:
     }
 
 private:
+
     sd_card_t* mSD;
     FIL mFiles[MAX_OPEN_FILES];
     bool mOpenFiles[MAX_OPEN_FILES];
