@@ -21,5 +21,5 @@ pico_sdk_init()
 add_subdirectory(lib)
 add_subdirectory(src)
 
-pico_set_program_name(${CMAKE_PROJECT_NAME} "mp3_player")
+pico_set_program_name(${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_NAME})
 pico_set_program_version(${CMAKE_PROJECT_NAME} "0.1")
