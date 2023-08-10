@@ -15,8 +15,17 @@ int _handle, _numBytes;
 uint _bytesRead;
 void* _buffer;
 FIL* _file;
+sd_card_t* mSD;
 
 void core1FileRead() {
+    // See FatFs - Generic FAT Filesystem Module, "Application Interface",
+    // http://elm-chan.org/fsw/ff/00index_e.html
+    mSD = sd_get_by_num(0);
+
+    FRESULT fr = f_mount(&mSD->fatfs, mSD->pcName, 1);
+    if (FR_OK != fr)
+        panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+
     while (true) {
         multicore_fifo_pop_blocking();
         f_read(_file, _buffer, _numBytes, &_bytesRead);
@@ -28,13 +37,13 @@ class Filemanager {
 public:
     void initSd()
     {
-        // See FatFs - Generic FAT Filesystem Module, "Application Interface",
-        // http://elm-chan.org/fsw/ff/00index_e.html
-        mSD = sd_get_by_num(0);
+        // // See FatFs - Generic FAT Filesystem Module, "Application Interface",
+        // // http://elm-chan.org/fsw/ff/00index_e.html
+        // mSD = sd_get_by_num(0);
 
-        FRESULT fr = f_mount(&mSD->fatfs, mSD->pcName, 1);
-        if (FR_OK != fr)
-            panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
+        // FRESULT fr = f_mount(&mSD->fatfs, mSD->pcName, 1);
+        // if (FR_OK != fr)
+        //     panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
 
         multicore_launch_core1(core1FileRead);
         puts("mounted! and core started");
@@ -89,7 +98,6 @@ public:
 
 private:
 
-    sd_card_t* mSD;
     FIL mFiles[MAX_OPEN_FILES];
     bool mOpenFiles[MAX_OPEN_FILES];
 };

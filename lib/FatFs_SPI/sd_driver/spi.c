@@ -34,7 +34,7 @@ static spi_t *spi_get_by_rx_dma(const uint rx_dma) {
 }
 
 static void __not_in_flash_func(spi_irq_handler)() {
-    //puts("spi irq");
+    // printf("spi irq on core %i\n", (int)get_core_num());
     io_rw_32 *dma_hw_ints_p;
     if (irqChannel1)
         dma_hw_ints_p = &dma_hw->ints1;
