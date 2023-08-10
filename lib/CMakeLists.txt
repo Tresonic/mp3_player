@@ -1,0 +1,2 @@
+add_subdirectory(FatFs_SPI)
+add_subdirectory(libmad)

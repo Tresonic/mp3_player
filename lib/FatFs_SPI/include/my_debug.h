@@ -30,9 +30,9 @@ extern "C" {
 
 
 //#if defined(DEBUG) && !defined(NDEBUG)
-#define DBG_PRINTF my_printf
+//#define DBG_PRINTF my_printf
 //#else
-//#define DBG_PRINTF(fmt, args...) /* Don't do anything in release builds*/
+#define DBG_PRINTF(fmt, args...) /* Don't do anything in release builds*/
 //#endif
 
 #define myASSERT(__e) \
