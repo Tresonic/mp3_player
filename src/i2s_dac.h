@@ -16,7 +16,7 @@ static uint lastDma = 0;
 
 void __isr __time_critical_func(dma_handler)() {
     dma_hw->ints0 = 1u << dma_channel;
-    int16_t* block = audiobuffer.getNextDmaBlock();
+    int16_t* block = audiobuffer::getNextDmaBlock();
     uint now = time_us_32();
     // printf("dma! ms since last: %i\n", (int)(now-lastDma));
     lastDma = now;

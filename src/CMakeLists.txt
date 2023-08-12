@@ -1,5 +1,8 @@
 add_executable(${CMAKE_PROJECT_NAME}
     mp3_player.cpp
+    player.cpp
+    filemanager.cpp
+    audiobuffer.cpp
     hw_config.c
 )
 

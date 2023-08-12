@@ -10,28 +10,27 @@
 int main()
 {
     stdio_init_all();
-    time_init();
 
-    getchar();
+    // getchar();
 
-    filemanager.initSd();
+    filemanager::initSd();
     puts("filemanager initted");
-    player.init();
+    player::init();
     puts("player initted");
 
-    player.play("pufotest.mp3");
+    player::play("honor.mp3");
     puts("play started!");
 
-    while (!player.isFinished()) {
+    while (!player::isFinished()) {
         if (getchar_timeout_us(0) == 'p') {
-            player.togglePause();
+            player::togglePause();
             puts("pause toggle");
         }
-        player.tick();
+        player::tick();
     }
 
 
-    filemanager.deinitSd();
+    filemanager::deinitSd();
 
     puts("Goodbye, world!");
     getchar();
