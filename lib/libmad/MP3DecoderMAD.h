@@ -14,7 +14,7 @@ namespace libmad {
 #define min(a, b) a > b ? b : a
 
 #ifndef MAD_MAX_RESULT_BUFFER_SIZE 
-#define MAD_MAX_RESULT_BUFFER_SIZE 1024
+#define MAD_MAX_RESULT_BUFFER_SIZE 4096
 #endif
 
 #ifndef MAD_MAX_BUFFER_SIZE 

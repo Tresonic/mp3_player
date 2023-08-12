@@ -10,6 +10,14 @@
 
 using namespace libmad;
 
+namespace player {
+void init();
+void tick();
+void play(const char* file);
+void togglePause();
+void stop();
+}
+
 class Player {
 public:
     Player()
@@ -24,29 +32,54 @@ public:
 
     void tick()
     {
-        if (!mPlaying)
+        const int kbps = 128;
+        const int readSize = kbps * 4;
+        const float buffersPerSec = kbps / 8 * 1000.f / (float)readSize;
+        const uint32_t usPerBuffer = 1000000.f / buffersPerSec;
+        static uint32_t lastDecode;
+        uint32_t now = time_us_32();
+
+        bool noSpace = audiobuffer.getNumWritableSamples() < config::AUDIOBUFFER_NUM * config::AUDIOBUFFER_SIZE / 2;
+        bool plentySpace = audiobuffer.getNumWritableSamples() > (config::AUDIOBUFFER_NUM - 1) * config::AUDIOBUFFER_SIZE;
+
+        if ((!mPlaying || (now - lastDecode <= usPerBuffer) || noSpace) && !playStart)
             return;
-        int w = audiobuffer.getNumWritableSamples();
-        // printf("availableSamples %i\n", w);
-        if (w < config::FILE_BUF_SIZE * 8) {
-            return;
-        }
+
+        lastDecode = now;
+
         absolute_time_t bef = get_absolute_time();
-        int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, config::FILE_BUF_SIZE);
+        int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, readSize);
         int diff = absolute_time_diff_us(bef, get_absolute_time()) / 1000;
         printf("bytes read: %u; read time: %i\n", readBytes, diff);
+
+        mp3.write(mFilebuffer, readBytes);
+        if (readBytes < readSize)
+            stop();
+
+        // if (!mPlaying)
+        //     return;
+        // int w = audiobuffer.getNumWritableSamples();
+        // // printf("availableSamples %i\n", w);
+        // if (w < config::FILE_BUF_SIZE * 8) {
+        //     return;
+        // }
+        // absolute_time_t bef = get_absolute_time();
+        // int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, config::FILE_BUF_SIZE);
+        // int diff = absolute_time_diff_us(bef, get_absolute_time()) / 1000;
+        // printf("bytes read: %u; read time: %i\n", readBytes, diff);
+
+        // sleep_ms(12);
 
         // mp3.write(mFilebuffer, readBytes);
         // if (readBytes < sizeof(mFilebuffer))
         //     stop();
 
-        sleep_ms(15);
-        static int idx = 0;
-        mp3.write(&bbng_mp3[idx], config::FILE_BUF_SIZE);
-        idx += config::FILE_BUF_SIZE;
-        if(idx > sizeof(bbng_mp3))
-            stop();
-
+        // sleep_ms(15);
+        // static int idx = 0;
+        // mp3.write(&bbng_mp3[idx], config::FILE_BUF_SIZE);
+        // idx += config::FILE_BUF_SIZE;
+        // if(idx > sizeof(bbng_mp3))
+        //     stop();
     }
 
     void play(const char* file)
@@ -55,14 +88,20 @@ public:
         if (mFp < 0)
             return;
         mp3.begin();
-        i2s_dac_set_enabled(true);
+        playStart = true;
         mPlaying = true;
         mFinished = false;
     }
 
-    void togglePause() {
-        mPlaying = !mPlaying;
-        i2s_dac_set_enabled(mPlaying);
+    void togglePause()
+    {
+        if (!mPlaying) {
+            playStart = true;
+            mPlaying = true;
+        } else {
+            mPlaying = false;
+            i2s_dac_set_enabled(false);
+        }
     }
 
     void stop()
@@ -76,18 +115,28 @@ public:
     bool isPlaying() { return mPlaying; }
     bool isFinished() { return mFinished; }
 
-    // int16_t* getNextDmaBlock() { return audiobuffer.getNextDmaBlock(); }
-
 private:
     static void pcmDataCallback(MadAudioInfo& info, int16_t* pcm_buffer, size_t len)
     {
-        // printf("PCM Data: %i Hz, %i Channels, %zu Samples\n", info.sample_rate,
-        //    info.channels, len);
+        printf("PCM Data: %i Hz, %i Channels, %zu Samples\n", info.sample_rate,
+            info.channels, len);
+
+        static int samplerate = 48000;
+        if (info.sample_rate != samplerate) {
+            samplerate = info.sample_rate;
+            set_pio_frequency(samplerate);
+        }
+
+        if (playStart) {
+            playStart = false;
+            i2s_dac_set_enabled(true);
+        }
+
         int s = audiobuffer.getNumWritableSamples();
         if (s < len) {
             printf("not enough space in audiobuffer: %i\n", s);
         }
-        audiobuffer.writeSamples(pcm_buffer, len);
+        audiobuffer.writeSamples(pcm_buffer, len, info.channels == 1);
     }
 
     MP3DecoderMAD mp3;

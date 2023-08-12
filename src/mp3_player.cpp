@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "pico/stdlib.h"
+#include "hardware/watchdog.h"
 
 #include "config.h"
 #include "filemanager.h"
@@ -18,7 +19,7 @@ int main()
     player.init();
     puts("player initted");
 
-    player.play("bbng.mp3");
+    player.play("pufotest.mp3");
     puts("play started!");
 
     while (!player.isFinished()) {
@@ -33,6 +34,7 @@ int main()
     filemanager.deinitSd();
 
     puts("Goodbye, world!");
-    for (;;)
-        ;
+    getchar();
+    watchdog_enable(1, 1);
+    while(1);
 }

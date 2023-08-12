@@ -33,6 +33,8 @@ void core1FileRead() {
     }
 }
 
+
+#define DBG_PIN 8
 class Filemanager {
 public:
     void initSd()
@@ -47,6 +49,8 @@ public:
 
         multicore_launch_core1(core1FileRead);
         puts("mounted! and core started");
+        gpio_init(DBG_PIN);
+        gpio_set_dir(DBG_PIN, GPIO_OUT);
     }
 
     void deinitSd() {
@@ -84,8 +88,10 @@ public:
         // uint bytesRead;
         // f_read(&mFiles[handle], buffer, numBytes, &bytesRead);
         _handle = handle; _buffer = buffer; _numBytes = numBytes; _file = &mFiles[handle];
+        gpio_put(DBG_PIN, true);
         multicore_fifo_push_blocking(1);
         multicore_fifo_pop_blocking();
+        gpio_put(DBG_PIN, false);
 
 
         return _bytesRead;

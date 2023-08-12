@@ -7,8 +7,9 @@
 
 #include "i2s_dac.pio.h"
 #include "config.h"
+#include "player.h"
 
-static int16_t zerobuf[128];
+static int16_t zerobuf[1024];
 static int dma_channel;
 static uint lastDma = 0;
 
@@ -17,7 +18,7 @@ void __isr __time_critical_func(dma_handler)() {
     dma_hw->ints0 = 1u << dma_channel;
     int16_t* block = audiobuffer.getNextDmaBlock();
     uint now = time_us_32();
-    printf("dma! ms since last: %i\n", (int)(now-lastDma));
+    // printf("dma! ms since last: %i\n", (int)(now-lastDma));
     lastDma = now;
     if (block) {
         dma_channel_transfer_from_buffer_now(dma_channel, block, config::AUDIOBUFFER_SIZE / 2);
