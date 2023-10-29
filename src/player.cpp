@@ -7,6 +7,7 @@
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
+#include <cstdint>
 
 namespace player {
 
@@ -20,10 +21,15 @@ static bool mPlaying;
 static bool mFinished;
 static int mFp;
 static bool playStart = false;
+static uint8_t vol = 255;
 
 void init()
 {
     init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
+}
+
+void setVol(uint8_t v) {
+    vol = v;
 }
 
 void tick()
@@ -132,7 +138,7 @@ static void pcmDataCallback(MadAudioInfo& info, int16_t* pcm_buffer, size_t len)
     if (s < len) {
         printf("not enough space in audiobuffer: %i\n", s);
     }
-    audiobuffer::writeSamples(pcm_buffer, len, info.channels == 1);
+    audiobuffer::writeSamples(pcm_buffer, len, info.channels == 1, vol);
 }
 
 }

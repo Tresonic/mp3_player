@@ -30,7 +30,7 @@ specific language governing permissions and limitations under the License.
 #include "sd_card.h"
 
 #define TRACE_PRINTF(fmt, args...)
-//#define TRACE_PRINTF printf  // task_printf
+// #define TRACE_PRINTF printf  // task_printf
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */

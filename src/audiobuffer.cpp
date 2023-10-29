@@ -30,14 +30,17 @@ int getNumWritableSamples()
     return dmaIdx - mWrIdx;
 }
 
-int writeSamples(int16_t* src, int maxSamples, bool mono)
+inline static int16_t vol_scale(int16_t s, uint8_t v) {
+    return static_cast<int16_t>(static_cast<int32_t>(s) * v >> 8);
+}
+
+int writeSamples(int16_t* src, int maxSamples, bool mono, uint8_t vol)
 {
-    const uint8_t vol = 255;
     int n = min(maxSamples, getNumWritableSamples());
     if (!mono) {
         for (int i = 0; i < n; ++i) {
             // mBuffer[mWrIdx++] = ((int)src[i])*vol >> 8;
-            mBuffer[mWrIdx++] = src[i];
+            mBuffer[mWrIdx++] = vol_scale(src[i], vol);;
             // if (src[i])
             //     printf("%i\n", (int)src[i]);
             if (mWrIdx >= count_of(mBuffer)) {
@@ -46,11 +49,11 @@ int writeSamples(int16_t* src, int maxSamples, bool mono)
         }
     } else {
         for (int i = 0; i < n; ++i) {
-            mBuffer[mWrIdx++] = src[i];
+            mBuffer[mWrIdx++] = vol_scale(src[i], vol);
             if (mWrIdx >= count_of(mBuffer)) {
                 mWrIdx = 0;
             }
-            mBuffer[mWrIdx++] = src[i];
+            mBuffer[mWrIdx++] = vol_scale(src[i], vol);;
             if (mWrIdx >= count_of(mBuffer)) {
                 mWrIdx = 0;
             }
