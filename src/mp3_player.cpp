@@ -19,7 +19,7 @@ int main()
     player::init();
     puts("player initted");
 
-    player::play("jam.mp3");
+    player::play("2.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {
