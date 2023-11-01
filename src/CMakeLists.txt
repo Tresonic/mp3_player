@@ -7,6 +7,7 @@ add_executable(${CMAKE_PROJECT_NAME}
 )
 
 pico_generate_pio_header(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s_dac.pio)
+pico_generate_pio_header(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/encoder.pio)
 
 # Add the standard library and FatFS/SPI to the build
 target_link_libraries(${CMAKE_PROJECT_NAME} 
