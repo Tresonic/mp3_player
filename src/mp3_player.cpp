@@ -6,11 +6,12 @@
 #include "config.h"
 #include "filemanager.h"
 #include "player.h"
+#include "btn_handler.h"
 
-int main()
+
+void init()
 {
     stdio_init_all();
-    uint8_t vol = 255;
     // getchar();
     puts("starting");
 
@@ -19,24 +20,35 @@ int main()
     player::init();
     puts("player initted");
 
+    init_btn_handler(player::getVol());
+}
+
+void serial_ctrl()
+{
+    char c = getchar_timeout_us(0);
+    if (c == 'p') {
+        player::togglePause();
+        puts("pause toggle");
+    } else if (c == '+') {
+        puts("vol+");
+        player::setVol(player::getVol() + 1);
+
+    } else if (c == '-') {
+        puts("vol-");
+        player::setVol(player::getVol() - 1);
+    }
+}
+
+int main()
+{
+    init();
+
     player::play("2.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {
-        char c = getchar_timeout_us(0);
-        if (c == 'p') {
-            player::togglePause();
-            puts("pause toggle");
-        } else if (c == '+') {
-            vol++;
-            puts("vol+");
-            player::setVol(vol);
-
-        } else if (c == '-') {
-            vol--;
-            puts("vol-");
-            player::setVol(vol);
-        }
+        serial_ctrl();
+        update_btns();
         player::tick();
     }
 

@@ -4,7 +4,6 @@
 
 #include "MP3DecoderMAD.h"
 #include "audiobuffer.h"
-#include "btn_handler.h"
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
@@ -27,12 +26,15 @@ static uint8_t vol = 128;
 void init()
 {
     init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
-    init_btn_handler(vol);
 }
 
 void setVol(uint8_t v)
 {
     vol = v;
+}
+
+uint8_t getVol() {
+    return vol;
 }
 
 void tick()
@@ -46,8 +48,6 @@ void tick()
 
     bool noSpace = audiobuffer::getNumWritableSamples() < config::AUDIOBUFFER_NUM * config::AUDIOBUFFER_SIZE / 2;
     bool plentySpace = audiobuffer::getNumWritableSamples() > (config::AUDIOBUFFER_NUM - 1) * config::AUDIOBUFFER_SIZE;
-
-    update_btns();
 
     if ((!mPlaying || (now - lastDecode <= usPerBuffer) || noSpace) && !playStart)
         return;
