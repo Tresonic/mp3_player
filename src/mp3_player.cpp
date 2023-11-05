@@ -12,7 +12,7 @@
 void init()
 {
     stdio_init_all();
-    // getchar();
+    getchar();
     puts("starting");
 
     filemanager::initSd();
