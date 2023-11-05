@@ -14,9 +14,15 @@ namespace player {
 using namespace libmad;
 
 static void pcmDataCallback(MadAudioInfo& info, int16_t* pcm_buffer, size_t len);
+static void updateBufferParams();
+
 
 static MP3DecoderMAD mp3(pcmDataCallback);
 static uint8_t mFilebuffer[config::FILE_BUF_SIZE];
+static int mBitrate;
+static uint32_t mUsPerBuffer;
+static int mReadSize;
+
 static bool mPlaying;
 static bool mFinished;
 static int mFp;
@@ -26,37 +32,53 @@ static uint8_t vol = 255;
 void init()
 {
     init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
+    mBitrate = 128;
+    updateBufferParams();
 }
 
 void setVol(uint8_t v) {
     vol = v;
 }
 
+void updateBufferParams() {
+    mReadSize = mBitrate * 4;
+    const float buffersPerSec = mBitrate / 8 * 1000.f / (float)mReadSize;
+    mUsPerBuffer = 1000000.f / buffersPerSec;
+}
+
 void tick()
 {
-    const int kbps = 128;
-    const int readSize = kbps * 4;
-    const float buffersPerSec = kbps / 8 * 1000.f / (float)readSize;
-    const uint32_t usPerBuffer = 1000000.f / buffersPerSec;
+    int nBitrate = mp3.bitrate();
+
+    if (nBitrate && !mBitrate) {
+        mBitrate = nBitrate;
+        mBitrate = 256;
+        updateBufferParams();
+    }
     static uint32_t lastDecode;
     uint32_t now = time_us_32();
 
     bool noSpace = audiobuffer::getNumWritableSamples() < config::AUDIOBUFFER_NUM * config::AUDIOBUFFER_SIZE / 2;
     bool plentySpace = audiobuffer::getNumWritableSamples() > (config::AUDIOBUFFER_NUM - 1) * config::AUDIOBUFFER_SIZE;
 
-    if ((!mPlaying || (now - lastDecode <= usPerBuffer) || noSpace) && !playStart)
+    if ((!mPlaying || (now - lastDecode <= mUsPerBuffer) || noSpace) && !playStart)
         return;
+
+    printf("bitrate: %i\n", nBitrate);
+
 
     lastDecode = now;
 
     uint32_t bef = time_us_32();
-    int readBytes = filemanager::readFileToBuffer(mFp, mFilebuffer, readSize);
+    int readBytes = filemanager::readFileToBuffer(mFp, mFilebuffer, mReadSize);
     int diff = (time_us_32() - bef) / 1000;
     printf("bytes read: %u; read time: %i\n", readBytes, diff);
 
     mp3.write(mFilebuffer, readBytes);
-    if (readBytes < readSize)
+    if (readBytes < mReadSize) {
+        printf("stop rdBy: %i, readSize: %i\n", readBytes, mReadSize);
         stop();
+    }
 
     // if (!mPlaying)
     //     return;
@@ -89,6 +111,7 @@ void play(const char* file)
     mFp = filemanager::openFile(file);
     if (mFp < 0)
         return;
+
     mp3.begin();
     playStart = true;
     mPlaying = true;

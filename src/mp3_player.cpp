@@ -11,7 +11,7 @@ int main()
 {
     stdio_init_all();
     uint8_t vol = 255;
-    // getchar();
+    getchar();
     puts("starting");
 
     filemanager::initSd();
@@ -19,7 +19,7 @@ int main()
     player::init();
     puts("player initted");
 
-    player::play("jam.mp3");
+    player::play("eyes.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {
