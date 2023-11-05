@@ -43,7 +43,7 @@ int main()
 {
     init();
 
-    player::play("2.mp3");
+    player::play("jam.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {

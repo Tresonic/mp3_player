@@ -9,6 +9,10 @@
 #include <climits>
 #include <cassert>
 
+#include <stdio.h>
+#include "pico/stdlib.h"
+
+
 namespace libmad {
 
 #define min(a, b) a > b ? b : a
@@ -45,6 +49,30 @@ struct MadAudioInfo {
     bool operator!=(MadAudioInfo alt){
         return !(*this == alt);
     }       
+};
+
+using MadMode = mad_mode;
+
+struct MadHeader {
+    MadHeader() = default;
+    MadHeader(const MadHeader&) = default;
+    MadHeader(const mad_header &hdr) {
+        bitrate = hdr.bitrate;
+        mode = hdr.mode;
+        layer = hdr.layer;
+    }
+
+    int bitrate;
+    MadMode mode;
+    int layer;
+
+    bool operator==(MadHeader alt){
+        return bitrate==alt.bitrate && mode == alt.mode && layer == alt.layer;
+    }
+
+    bool operator!=(MadHeader alt){
+        return !(*this == alt);
+    }
 };
 
 /**
@@ -199,6 +227,10 @@ class MP3DecoderMAD  {
             return mad_info;
         }
 
+        int bitrate() {
+            return mad_hdr.bitrate / 1000;
+        }
+
         /// Makes the mp3 data available for decoding: however we recommend to provide the data via a callback or input stream
         size_t write(const void *in_ptr, size_t in_size) {
             size_t result = 0;
@@ -239,6 +271,7 @@ class MP3DecoderMAD  {
 
         MadInputBuffer buffer;
         MadAudioInfo mad_info;
+        MadHeader mad_hdr;
         int16_t *p_result_buffer = nullptr;
 
         /**
@@ -373,6 +406,9 @@ class MP3DecoderMAD  {
             unsigned int nchannels, nsamples;
             mad_fixed_t const *left_ch, *right_ch;
             MadAudioInfo act_info(*pcm);
+
+            mad_hdr = MadHeader(*header);
+            // printf("hhhh: %i\n", mad_hdr.bitrate);
             
             /// notify abmad_output_stream changes
             if (act_info != mad_info){
