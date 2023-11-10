@@ -2,7 +2,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     mp3_player.cpp
     player.cpp
     filemanager.cpp
-    audiobuffer.cpp
+    audiofile_reader.cpp
     hw_config.c
 )
 

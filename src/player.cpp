@@ -1,39 +1,50 @@
 #include "player.h"
 
 #include "hardware/timer.h"
+#include <cstdint>
 
-#include "MP3DecoderMAD.h"
-#include "audiobuffer.h"
+#include "mad.h"
+
+#include "audiofile_reader.h"
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
-#include <cstdint>
 
 namespace player {
 
-using namespace libmad;
+static int16_t mSampleBuffer[SAMPLE_BUF_NUM][AUDIO_BUFSIZE];
+static int mBufferIdx = 0;
+static int mBufferIdxOld = 1;
 
-static void pcmDataCallback(MadAudioInfo& info, int16_t* pcm_buffer, size_t len);
-static void updateBufferParams();
+static bool playing = false;
+static bool finished = false;
 
-
-static MP3DecoderMAD mp3(pcmDataCallback);
-static uint8_t mFilebuffer[config::FILE_BUF_SIZE];
-static int mBitrate;
-static uint32_t mUsPerBuffer;
-static int mReadSize;
-
-static bool mPlaying;
-static bool mFinished;
-static int mFp;
-static bool playStart = false;
+static struct mad_stream stream;
+static struct mad_frame frame;
+static struct mad_synth synth;
+static int mSampleRate = 48000;
 static uint8_t vol = 128;
+
+/// Scales the sample from internal MAD format to int16
+static int16_t scale(mad_fixed_t sample)
+{
+    /* round */
+    if (sample >= MAD_F_ONE)
+        return (INT16_MAX);
+    if (sample <= -MAD_F_ONE)
+        return (INT16_MIN);
+
+    /* Conversion. */
+    sample = sample >> (MAD_F_FRACBITS - 15);
+    return ((signed short)sample);
+}
 
 void init()
 {
     init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
-    mBitrate = 128;
-    updateBufferParams();
+    mad_stream_init(&stream);
+    mad_frame_init(&frame);
+    mad_synth_init(&synth);
 }
 
 void setVol(uint8_t v)
@@ -41,132 +52,126 @@ void setVol(uint8_t v)
     vol = v;
 }
 
-uint8_t getVol() {
+uint8_t getVol()
+{
     return vol;
 }
 
-void updateBufferParams() {
-    mReadSize = mBitrate * 4;
-    const float buffersPerSec = mBitrate / 8 * 1000.f / (float)mReadSize;
-    mUsPerBuffer = 1000000.f / buffersPerSec;
+int getSampleRate()
+{
+    return mSampleRate;
+}
+
+int decodeNextFrame()
+{
+    if (mBufferIdx >= SAMPLE_BUF_NUM)
+        mBufferIdx = 0;
+
+    int err = audiofile::readNextBuffer();
+    uint8_t* buf_ptr = audiofile::getBuffer();
+
+    mad_stream_buffer(&stream, buf_ptr, FILE_BUFSIZE);
+    int rc = mad_frame_decode(&frame, &stream);
+    if (rc == 0) {
+        // std::cout << stream.next_frame - filebuf << " offset\n";
+        audiofile::setUsedBytes(stream.next_frame - buf_ptr);
+        // std::cout << "decoded!!\n";
+        mad_synth_frame(&synth, &frame);
+
+        if (synth.pcm.length > 0) {
+            if (synth.pcm.samplerate != mSampleRate) {
+                mSampleRate = synth.pcm.samplerate;
+                set_pio_frequency(mSampleRate);
+            }
+            printf("got audio: %i samples; samplerate: %i\n", (int)synth.pcm.length, (int)mSampleRate);
+            int i = 0;
+
+            if (synth.pcm.channels == 2) {
+                for (int j = 0; j < synth.pcm.length; j++) {
+                        mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
+                        mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[1][j]);
+                }
+            } else if (synth.pcm.channels == 1) {
+                for (int j = 0; j < synth.pcm.length; j++) {
+                        mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
+                        mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
+                }                
+            } else {
+                printf("unsupported channel number: %i\n", (int)synth.pcm.channels);
+            }
+
+        }
+    } else {
+        printf("%i decode failed!\n", rc);
+        return -1;
+    }
+    return 1;
 }
 
 void tick()
 {
-    int nBitrate = mp3.bitrate();
-
-    if (nBitrate && !mBitrate) {
-        mBitrate = nBitrate;
-        mBitrate = 256;
-        updateBufferParams();
+    if (mBufferIdx != mBufferIdxOld) {
+        mBufferIdxOld = mBufferIdx;
+        if (decodeNextFrame() == -1) {
+            stop();
+        }
     }
-    static uint32_t lastDecode;
-    uint32_t now = time_us_32();
+}
 
-    bool noSpace = audiobuffer::getNumWritableSamples() < config::AUDIOBUFFER_NUM * config::AUDIOBUFFER_SIZE / 2;
-    bool plentySpace = audiobuffer::getNumWritableSamples() > (config::AUDIOBUFFER_NUM - 1) * config::AUDIOBUFFER_SIZE;
-
-    if ((!mPlaying || (now - lastDecode <= mUsPerBuffer) || noSpace) && !playStart)
-        return;
-
-    printf("bitrate: %i\n", nBitrate);
-
-
-    lastDecode = now;
-
-    uint32_t bef = time_us_32();
-    int readBytes = filemanager::readFileToBuffer(mFp, mFilebuffer, mReadSize);
-    int diff = (time_us_32() - bef) / 1000;
-    printf("bytes read: %u; read time: %i\n", readBytes, diff);
-
-    mp3.write(mFilebuffer, readBytes);
-    if (readBytes < mReadSize) {
-        printf("stop rdBy: %i, readSize: %i\n", readBytes, mReadSize);
-        stop();
+void usedCurrentBuffer()
+{
+    mBufferIdx++;
+    if (mBufferIdx >= SAMPLE_BUF_NUM) {
+        mBufferIdx = 0;
     }
+}
 
-    // if (!mPlaying)
-    //     return;
-    // int w = audiobuffer.getNumWritableSamples();
-    // // printf("availableSamples %i\n", w);
-    // if (w < config::FILE_BUF_SIZE * 8) {
-    //     return;
-    // }
-    // absolute_time_t bef = get_absolute_time();
-    // int readBytes = filemanager.readFileToBuffer(mFp, mFilebuffer, config::FILE_BUF_SIZE);
-    // int diff = absolute_time_diff_us(bef, get_absolute_time()) / 1000;
-    // printf("bytes read: %u; read time: %i\n", readBytes, diff);
+int16_t* getLastFilledBuffer()
+{
+    return mSampleBuffer[mBufferIdx];
+}
 
-    // sleep_ms(12);
-
-    // mp3.write(mFilebuffer, readBytes);
-    // if (readBytes < sizeof(mFilebuffer))
-    //     stop();
-
-    // sleep_ms(15);
-    // static int idx = 0;
-    // mp3.write(&bbng_mp3[idx], config::FILE_BUF_SIZE);
-    // idx += config::FILE_BUF_SIZE;
-    // if(idx > sizeof(bbng_mp3))
-    //     stop();
+int getLastFilledBufferIdx()
+{
+    return mBufferIdx;
 }
 
 void play(const char* file)
 {
-    mFp = filemanager::openFile(file);
-    if (mFp < 0)
+    if (!finished) {
+        stop();
+    }
+    mBufferIdx = 0;
+    mBufferIdxOld = 1;
+    if (audiofile::open(file) == -1) {
+        puts("could not open file");
         return;
-
-    mp3.begin();
-    playStart = true;
-    mPlaying = true;
-    mFinished = false;
+    }
+    decodeNextFrame();
+    i2s_dac_set_enabled(true);
+    playing = true;
+    finished = false;
 }
 
 void togglePause()
 {
-    if (!mPlaying) {
-        playStart = true;
-        mPlaying = true;
+    if (!playing) {
+        // playStart = true;
+        playing = true;
     } else {
-        mPlaying = false;
-        i2s_dac_set_enabled(false);
+        playing = false;
     }
+    i2s_dac_set_enabled(playing);
 }
 
 void stop()
 {
-    filemanager::closeFile(mFp);
+    audiofile::close();
     i2s_dac_set_enabled(false);
-    mp3.end();
-    mPlaying = false;
-    mFinished = true;
+    playing = false;
+    finished = true;
 }
 
-bool isPlaying() { return mPlaying; }
-bool isFinished() { return mFinished; }
-
-static void pcmDataCallback(MadAudioInfo& info, int16_t* pcm_buffer, size_t len)
-{
-    printf("PCM Data: %i Hz, %i Channels, %zu Samples\n", info.sample_rate,
-        info.channels, len);
-
-    static int samplerate = 48000;
-    if (info.sample_rate != samplerate) {
-        samplerate = info.sample_rate;
-        set_pio_frequency(samplerate);
-    }
-
-    if (playStart) {
-        playStart = false;
-        i2s_dac_set_enabled(true);
-    }
-
-    int s = audiobuffer::getNumWritableSamples();
-    if (s < len) {
-        printf("not enough space in audiobuffer: %i\n", s);
-    }
-    audiobuffer::writeSamples(pcm_buffer, len, info.channels == 1, vol);
-}
-
+bool isPlaying() { return playing; }
+bool isFinished() { return finished; }
 }
