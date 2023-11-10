@@ -1,5 +1,8 @@
 #include "filemanager.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #include "f_util.h"
 #include "ff.h"
 #include "pico/multicore.h"
@@ -8,6 +11,7 @@
 
 #include "config.h"
 #include "hw_config.h"
+#include "util.h"
 
 namespace filemanager {
 
@@ -16,6 +20,45 @@ using config::MAX_OPEN_FILES;
 static sd_card_t* mSD;
 static FIL mFiles[MAX_OPEN_FILES];
 static bool mOpenFiles[MAX_OPEN_FILES];
+
+RET_TYPE list_dir(const char* path, char* files, int files_len, char* dirs, int dirs_len)
+{
+    FRESULT res;
+    DIR dir;
+    FILINFO fno;
+    int files_index = 0;
+    int dirs_index = 0;
+
+    res = f_opendir(&dir, path);
+    if (res == FR_OK) {
+        while (true) {
+            res = f_readdir(&dir, &fno);
+            if (res != FR_OK || fno.fname[0] == 0)
+                break;
+
+            int len = strlen(fno.fname);
+            if (fno.fattrib & AM_DIR) {
+                if (dirs_index + len < dirs_len) {
+                    strcpy(&dirs[dirs_index], fno.fname);
+                    dirs_index += len;
+                    dirs[dirs_index++] = '\n';
+                }
+            } else {
+                if (files_index + len < files_len) {
+                    strcpy(&files[files_index], fno.fname);
+                    files_index += len;
+                    files[files_index++] = '\n';
+                }
+            }
+        }
+        dirs[dirs_index] = '\0';
+        files[files_index] = '\0';
+        f_closedir(&dir);
+        return RET_SUCCESS;
+    } else {
+        return RET_ERROR;
+    }
+}
 
 void initSd()
 {
