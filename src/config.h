@@ -15,10 +15,5 @@ const int PIN_ENCODER_B = 11;
 
 const int PIN_BTN_PAUSE = 21;
 
-const int FILE_BUF_SIZE = 2048;
-
-const int AUDIOBUFFER_SIZE = 4096;
-const int AUDIOBUFFER_NUM = 6;
-
 const int MAX_OPEN_FILES = 5;
 }

@@ -72,10 +72,18 @@ unsigned int readFileToBuffer(int handle, void* buffer, int numBytes)
     return bytesRead;
 }
 
-int readDirectoryToBuffer()
-{
-    // TODO
-    return 0;
+int seek(int handle, unsigned long pos) {
+    if (handle < 0 || handle >= MAX_OPEN_FILES || !mOpenFiles[handle]) {
+        return -1;
+    }
+    return f_lseek(&mFiles[handle], pos);    
+}
+
+bool eof(int handle) {
+    if (handle < 0 || handle >= MAX_OPEN_FILES || !mOpenFiles[handle]) {
+        return false;
+    }
+    return f_eof(&mFiles[handle]);
 }
 
 }

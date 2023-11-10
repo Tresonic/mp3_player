@@ -16,17 +16,18 @@ static uint lastDma = 0;
 
 void __isr __time_critical_func(dma_handler)() {
     dma_hw->ints0 = 1u << dma_channel;
-    int16_t* block = audiobuffer::getNextDmaBlock();
-    uint now = time_us_32();
+    int16_t* block = player::getLastFilledBuffer();
+    // uint now = time_us_32();
     // printf("dma! ms since last: %i\n", (int)(now-lastDma));
-    lastDma = now;
+    // lastDma = now;
     if (block) {
-        dma_channel_transfer_from_buffer_now(dma_channel, block, config::AUDIOBUFFER_SIZE / 2);
+        // size of transfer = #samples(int16) / #samples_per_transfer(DMA_SIZE_32)
+        dma_channel_transfer_from_buffer_now(dma_channel, block, player::AUDIO_BUFSIZE / 2);
     } else {
         puts("zero dma");
         dma_channel_transfer_from_buffer_now(dma_channel, zerobuf, sizeof(zerobuf) / 2);
     }
-
+    player::usedCurrentBuffer();
     // puts("dma started");
 }
 
