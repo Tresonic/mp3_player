@@ -26,7 +26,7 @@ static int mSampleRate = 48000;
 static uint8_t vol = 128;
 
 /// Scales the sample from internal MAD format to int16
-static int16_t scale(mad_fixed_t sample)
+inline static int16_t scale(mad_fixed_t sample)
 {
     /* round */
     if (sample >= MAD_F_ONE)
@@ -36,7 +36,10 @@ static int16_t scale(mad_fixed_t sample)
 
     /* Conversion. */
     sample = sample >> (MAD_F_FRACBITS - 15);
-    return ((signed short)sample);
+
+
+    /* Volume scaling */
+    return static_cast<int16_t>(static_cast<int32_t>(sample) * vol >> 8);
 }
 
 void init()
@@ -49,6 +52,7 @@ void init()
 
 void setVol(uint8_t v)
 {
+    printf("setting vol: %i\n", (int)v);
     vol = v;
 }
 
@@ -83,7 +87,7 @@ int decodeNextFrame()
                 mSampleRate = synth.pcm.samplerate;
                 set_pio_frequency(mSampleRate);
             }
-            printf("got audio: %i samples; samplerate: %i\n", (int)synth.pcm.length, (int)mSampleRate);
+            // printf("got audio: %i samples; samplerate: %i\n", (int)synth.pcm.length, (int)mSampleRate);
             int i = 0;
 
             if (synth.pcm.channels == 2) {

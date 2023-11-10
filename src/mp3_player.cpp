@@ -39,12 +39,12 @@ void serial_ctrl()
         player::togglePause();
         puts("pause toggle");
     } else if (c == '+') {
-        puts("vol+");
         player::setVol(player::getVol() + 1);
+        printf("vol+: %i\n", (int)player::getVol());
 
     } else if (c == '-') {
-        puts("vol-");
         player::setVol(player::getVol() - 1);
+        printf("vol-: %i\n", (int)player::getVol());
     }
 }
 
@@ -52,7 +52,7 @@ int main()
 {
     init();
 
-    player::play("eyes.mp3");
+    player::play("pufotest.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {

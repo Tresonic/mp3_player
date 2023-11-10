@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "config.h"
 
 const int FILE_BUFSIZE = 1024;

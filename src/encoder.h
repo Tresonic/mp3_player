@@ -7,19 +7,31 @@
 #include "config.h"
 #include "encoder.pio.h"
 
-PIO pio;
-uint sm;
-int rotation;
+static PIO pio;
+static uint sm;
+static int rotation;
+
+static int get_rotation() {
+    static int rotation_old;
+    int ret = 0;
+    if (rotation>rotation_old) {
+        ret = 1;
+    } else if (rotation<rotation_old) {
+        ret = -1;
+    }
+    rotation_old = rotation;
+    return ret;
+}
 
 static void pio_irq_handler()
 {
     // test if irq 0 was raised
     if (pio1_hw->irq & 1) {
-        rotation = rotation - config::VOLUME_STEP;
+        rotation++;
     }
     // test if irq 1 was raised
     if (pio1_hw->irq & 2) {
-        rotation = rotation + config::VOLUME_STEP;
+        rotation--;
     }
     // clear both interrupts
     pio1_hw->irq = 3;

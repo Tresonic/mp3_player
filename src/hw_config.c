@@ -26,24 +26,23 @@ socket, which SPI it is driven by, and how it is wired.
 */
 //
 #include "my_debug.h"
-//
 #include "hw_config.h"
-//
 #include "ff.h" /* Obtains integer types */
-//
 #include "diskio.h" /* Declarations of disk functions */
+
+#include "pins.h"
 
 // Hardware Configuration of SPI "objects"
 // Note: multiple SD cards can be driven by one SPI if they use different slave
 // selects.
 static spi_t spis[] = { // One for each SPI.
     {
-        .hw_inst = spi0, // SPI component
-        .miso_gpio = 4, // GPIO number (not pin number)
-        .mosi_gpio = 7,
-        .sck_gpio = 6,
-        .baud_rate = 12500 * 1000,
-        //.baud_rate = 25 * 1000 * 1000, // Actual frequency: 20833333.
+        .hw_inst = spi0,  // SPI component
+        .miso_gpio = PIN_MISO, // GPIO number (not pin number)
+        .mosi_gpio = PIN_MOSI,
+        .sck_gpio = PIN_CLK,
+        .baud_rate = 12500 * 1000,  
+        //.baud_rate = 25 * 1000 * 1000, // Actual frequency: 20833333. 
     }
 };
 
@@ -52,7 +51,7 @@ static sd_card_t sd_cards[] = { // One for each SD card
     {
         .pcName = "0:", // Name used to mount device
         .spi = &spis[0], // Pointer to the SPI driving this card
-        .ss_gpio = 5, // The SPI slave select GPIO for this SD card
+        .ss_gpio = PIN_SS, // The SPI slave select GPIO for this SD card
         .use_card_detect = false,
         .card_detect_gpio = 29, // Card detect
         .card_detected_true = -1 // What the GPIO read returns when a card is
