@@ -1,13 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "hardware/watchdog.h"
 #include "pico/stdlib.h"
 
+#include "btn_handler.h"
 #include "config.h"
 #include "filemanager.h"
 #include "player.h"
-#include "btn_handler.h"
-
 
 void init()
 {
@@ -19,6 +19,15 @@ void init()
     puts("filemanager initted");
     player::init();
     puts("player initted");
+
+    int files_len = 1024;
+    int dirs_len = 1024;
+    char* files = (char*)malloc(files_len);
+    char* dirs = (char*)malloc(dirs_len);
+
+    filemanager::list_dir("/", files, files_len, dirs, dirs_len);
+    printf("%s\n%s\n", files, dirs);
+    getchar();
 
     init_btn_handler(player::getVol());
 }
