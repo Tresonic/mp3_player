@@ -40,11 +40,8 @@ void serial_ctrl()
         puts("pause toggle");
     } else if (c == '+') {
         player::setVol(player::getVol() + 1);
-        printf("vol+: %i\n", (int)player::getVol());
-
     } else if (c == '-') {
         player::setVol(player::getVol() - 1);
-        printf("vol-: %i\n", (int)player::getVol());
     }
 }
 

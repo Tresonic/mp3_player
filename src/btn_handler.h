@@ -8,7 +8,7 @@
 
 void init_btn_handler(uint8_t vol)
 {
-    init_encoder_pio(config::PIN_ENCODER_A, config::PIN_ENCODER_B);
+    init_encoder();
 
     gpio_init(config::PIN_BTN_PAUSE);
     gpio_set_pulls(config::PIN_BTN_PAUSE, true, false);
