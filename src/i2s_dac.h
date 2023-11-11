@@ -1,31 +1,33 @@
 #include <stdio.h>
 
-#include "hardware/pio.h"
 #include "hardware/clocks.h"
 #include "hardware/dma.h"
 #include "hardware/irq.h"
+#include "hardware/pio.h"
 
-#include "i2s_dac.pio.h"
 #include "config.h"
+#include "i2s_dac.pio.h"
 #include "player.h"
 
 static int16_t zerobuf[1024];
 static int dma_channel;
 static uint lastDma = 0;
 
-
 void __isr __time_critical_func(dma_handler)() {
     dma_hw->ints0 = 1u << dma_channel;
-    int16_t* block = player::getLastFilledBuffer();
+    int16_t *block = player::getLastFilledBuffer();
     // uint now = time_us_32();
     // printf("dma! ms since last: %i\n", (int)(now-lastDma));
     // lastDma = now;
     if (block) {
-        // size of transfer = #samples(int16) / #samples_per_transfer(DMA_SIZE_32)
-        dma_channel_transfer_from_buffer_now(dma_channel, block, player::AUDIO_BUFSIZE / 2);
+        // size of transfer = #samples(int16) /
+        // #samples_per_transfer(DMA_SIZE_32)
+        dma_channel_transfer_from_buffer_now(dma_channel, block,
+                                             player::AUDIO_BUFSIZE / 2);
     } else {
         puts("zero dma");
-        dma_channel_transfer_from_buffer_now(dma_channel, zerobuf, sizeof(zerobuf) / 2);
+        dma_channel_transfer_from_buffer_now(dma_channel, zerobuf,
+                                             sizeof(zerobuf) / 2);
     }
     player::usedCurrentBuffer();
     // puts("dma started");
@@ -35,12 +37,14 @@ void set_pio_frequency(unsigned int sample_freq) {
     // printf("setting pio freq %d\n", (int) sample_freq);
     // uint32_t system_clock_frequency = clock_get_hz(clk_sys);
     // assert(system_clock_frequency < 0x40000000);
-    // uint32_t divider = system_clock_frequency * 4 / sample_freq; // avoid arithmetic overflow
-    // printf("System clock at %u, I2S clock divider 0x%x/256\n", (uint) system_clock_frequency, (uint)divider);
+    // uint32_t divider = system_clock_frequency * 4 / sample_freq; // avoid
+    // arithmetic overflow printf("System clock at %u, I2S clock divider
+    // 0x%x/256\n", (uint) system_clock_frequency, (uint)divider);
     // assert(divider < 0x1000000);
     // pio_sm_set_clkdiv_int_frac(pio0, 0, divider >> 8u, divider & 0xffu);
 
-    float bitClk = sample_freq * 16 /* bits per sample */ * 2.0 /* channels */ * 2.0 /* edges per clock */;
+    float bitClk = sample_freq * 16 /* bits per sample */ * 2.0 /* channels */ *
+                   2.0 /* edges per clock */;
     pio_sm_set_clkdiv(pio0, 0, (float)clock_get_hz(clk_sys) / bitClk);
 }
 
@@ -59,7 +63,6 @@ void init_pio(int pin_clk, int pin_data) {
     // return with the memory offset of the program.
     uint offset = pio_add_program(pio, &i2s_dac_program);
 
-
     // Initialize the program using the helper function in our .pio file
     i2s_dac_program_init(pio, sm, offset, pin_data, pin_clk);
 
@@ -74,17 +77,16 @@ void init_pio(int pin_clk, int pin_data) {
     channel_config_set_dreq(&dma_config, DREQ_PIO0_TX0);
     channel_config_set_transfer_data_size(&dma_config, DMA_SIZE_32);
     channel_config_set_high_priority(&dma_config, true);
-    dma_channel_configure(dma_channel,
-                          &dma_config,
-                          &pio->txf[sm], //dest is sm 0
-                          NULL, //src
-                          0, //count
-                          false //trigger
+    dma_channel_configure(dma_channel, &dma_config,
+                          &pio->txf[sm], // dest is sm 0
+                          NULL,          // src
+                          0,             // count
+                          false          // trigger
     );
     irq_set_exclusive_handler(DMA_IRQ_0, dma_handler);
     irq_set_priority(DMA_IRQ_0, 0);
     puts("dma handler set");
-    
+
     dma_channel_set_irq0_enabled(dma_channel, true);
     puts("marker");
 }

@@ -5,11 +5,11 @@
 
 #include "f_util.h"
 #include "ff.h"
-#include "sd_card.h"
 #include "hw_config.h"
 #include "pico/multicore.h"
 #include "pico/stdlib.h"
 #include "rtc.h"
+#include "sd_card.h"
 
 #include "config.h"
 
@@ -17,12 +17,12 @@ namespace filemanager {
 
 using config::MAX_OPEN_FILES;
 
-static sd_card_t* mSD;
+static sd_card_t *mSD;
 static FIL mFiles[MAX_OPEN_FILES];
 static bool mOpenFiles[MAX_OPEN_FILES];
 
-RET_TYPE list_dir(const char* path, char* files, int files_len, char* dirs, int dirs_len)
-{
+RET_TYPE list_dir(const char *path, char *files, int files_len, char *dirs,
+                  int dirs_len) {
     FRESULT res;
     DIR dir;
     FILINFO fno;
@@ -60,8 +60,7 @@ RET_TYPE list_dir(const char* path, char* files, int files_len, char* dirs, int 
     }
 }
 
-void initSd()
-{
+void initSd() {
     time_init();
 
     // See FatFs - Generic FAT Filesystem Module, "Application Interface",
@@ -73,13 +72,9 @@ void initSd()
         panic("f_mount error: %s (%d)\n", FRESULT_str(fr), fr);
 }
 
-void deinitSd()
-{
-    f_unmount(mSD->pcName);
-}
+void deinitSd() { f_unmount(mSD->pcName); }
 
-int openFile(const char* path)
-{
+int openFile(const char *path) {
     for (int i = 0; i < MAX_OPEN_FILES; ++i) {
         if (!mOpenFiles[i]) {
             FRESULT fr = f_open(&mFiles[i], path, FA_READ);
@@ -94,8 +89,7 @@ int openFile(const char* path)
     return -1;
 }
 
-void closeFile(int handle)
-{
+void closeFile(int handle) {
     if (handle < 0 || handle >= MAX_OPEN_FILES) {
         return;
     }
@@ -103,8 +97,7 @@ void closeFile(int handle)
     mOpenFiles[handle] = false;
 }
 
-unsigned int readFileToBuffer(int handle, void* buffer, int numBytes)
-{
+unsigned int readFileToBuffer(int handle, void *buffer, int numBytes) {
     if (handle < 0 || handle >= MAX_OPEN_FILES || !mOpenFiles[handle]) {
         return -1;
     }
@@ -119,7 +112,7 @@ int seek(int handle, unsigned long pos) {
     if (handle < 0 || handle >= MAX_OPEN_FILES || !mOpenFiles[handle]) {
         return -1;
     }
-    return f_lseek(&mFiles[handle], pos);    
+    return f_lseek(&mFiles[handle], pos);
 }
 
 bool eof(int handle) {
@@ -129,4 +122,4 @@ bool eof(int handle) {
     return f_eof(&mFiles[handle]);
 }
 
-}
+} // namespace filemanager

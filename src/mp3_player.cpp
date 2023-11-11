@@ -9,8 +9,7 @@
 #include "filemanager.h"
 #include "player.h"
 
-void init()
-{
+void init() {
     stdio_init_all();
     getchar();
     puts("starting");
@@ -22,8 +21,8 @@ void init()
 
     int files_len = 1024;
     int dirs_len = 1024;
-    char* files = (char*)malloc(files_len);
-    char* dirs = (char*)malloc(dirs_len);
+    char *files = (char *)malloc(files_len);
+    char *dirs = (char *)malloc(dirs_len);
 
     filemanager::list_dir("/", files, files_len, dirs, dirs_len);
     printf("%s\n%s\n", files, dirs);
@@ -32,8 +31,7 @@ void init()
     init_btn_handler(player::getVol());
 }
 
-void serial_ctrl()
-{
+void serial_ctrl() {
     char c = getchar_timeout_us(0);
     if (c == 'p') {
         player::togglePause();
@@ -45,8 +43,7 @@ void serial_ctrl()
     }
 }
 
-int main()
-{
+int main() {
     init();
 
     player::play("pufotest.mp3");

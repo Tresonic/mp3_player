@@ -12,20 +12,17 @@ static uint8_t filebuf[FILE_BUFSIZE];
 static int file = -1;
 static unsigned long nextBufferByte = 0;
 
-static int find_sync(uint8_t* buf, int len)
-{
+static int find_sync(uint8_t *buf, int len) {
     for (int i = 0; i < len - 1; ++i) {
         // if (buf[i] == 0xff && (buf[i + 1] & 0xe0) == 0xe0) {
-        if (buf[i] == 0xff && buf[i+1] == 0xfb) {
+        if (buf[i] == 0xff && buf[i + 1] == 0xfb) {
             return i;
         }
     }
     return -1;
 }
 
-
-int open(const char* path)
-{
+int open(const char *path) {
     file = filemanager::openFile(path);
     if (file < 0) {
         // std::cout << "bad file\n";
@@ -34,20 +31,19 @@ int open(const char* path)
     return 0;
 }
 
-void close()
-{
+void close() {
     nextBufferByte = 0;
     filemanager::closeFile(file);
 }
 
-int readNextBuffer()
-{
+int readNextBuffer() {
     int sync_start = 0, sync_end = 0;
 
     // std::cout << nextBufferByte << " now at this pos\n";
     filemanager::seek(file, nextBufferByte);
-    
-    if (filemanager::readFileToBuffer(file, filebuf, FILE_BUFSIZE) != FILE_BUFSIZE) {
+
+    if (filemanager::readFileToBuffer(file, filebuf, FILE_BUFSIZE) !=
+        FILE_BUFSIZE) {
         puts("read fail");
         if (filemanager::eof(file)) {
             puts("eof");
@@ -59,7 +55,8 @@ int readNextBuffer()
         puts("not aligned! ");
         sync_start = find_sync(filebuf, FILE_BUFSIZE);
         while (sync_start == -1) {
-            if (filemanager::readFileToBuffer(file, filebuf, FILE_BUFSIZE) != FILE_BUFSIZE) {
+            if (filemanager::readFileToBuffer(file, filebuf, FILE_BUFSIZE) !=
+                FILE_BUFSIZE) {
                 puts("read fail\n");
                 if (filemanager::eof(file)) {
                     puts("eof\n");
@@ -71,22 +68,18 @@ int readNextBuffer()
         printf("start offset %i\n", sync_start);
         nextBufferByte += sync_start;
         memmove(filebuf, filebuf + sync_start, FILE_BUFSIZE - sync_start);
-    
-        if (filemanager::readFileToBuffer(file, filebuf + (FILE_BUFSIZE - sync_start), sync_start) != sync_start)
+
+        if (filemanager::readFileToBuffer(file,
+                                          filebuf + (FILE_BUFSIZE - sync_start),
+                                          sync_start) != sync_start)
             return -1;
     }
 
     return 0;
 }
 
-void setUsedBytes(int n)
-{
-    nextBufferByte += n;
-}
+void setUsedBytes(int n) { nextBufferByte += n; }
 
-uint8_t* getBuffer()
-{
-    return filebuf;
-}
+uint8_t *getBuffer() { return filebuf; }
 
-}
+} // namespace audiofile
