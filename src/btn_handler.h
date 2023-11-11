@@ -2,7 +2,7 @@
 #include "hardware/timer.h"
 
 #include "config.h"
-#include "util.h"
+#include "utils.h"
 #include "encoder.h"
 #include "player.h"
 

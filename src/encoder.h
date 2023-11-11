@@ -5,7 +5,6 @@
 #include "pico/stdlib.h"
 
 #include "config.h"
-#include "encoder.pio.h"
 
 
 static volatile int rotation;
