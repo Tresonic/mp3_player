@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int TITLE_LEN = 31;
+const int TITLE_LEN = 33;
 const int ARTIST_LEN = 42;
 const int ALBUM_LEN = 64;
-const int YEAR_LEN = 22;
+const int YEAR_LEN = 5;
 const int GENRE_LEN = 64;
 
 // Structure to store ID3 tag information
@@ -33,7 +33,7 @@ void parse_mp3_metadata(const char *mp3_buffer, size_t tag_size,
 
     // Check if the buffer is large enough to contain the ID3 header
     if (tag_size < 10 || strncmp(mp3_buffer, "ID3", 3) != 0) {
-        printf("ERROR: No valid ID3 header found in the buffer.");
+        printf("ERROR: No valid ID3 header found in the buffer.\n");
         return;
     }
 
@@ -47,7 +47,7 @@ void parse_mp3_metadata(const char *mp3_buffer, size_t tag_size,
         // ID3v2.4
         mp3_buffer += 10;
     } else {
-        printf("ERROR: No valid ID3 header found in the buffer.");
+        printf("ERROR: No valid ID3 header found in the buffer.\n");
         return;
     }
 
@@ -55,7 +55,7 @@ void parse_mp3_metadata(const char *mp3_buffer, size_t tag_size,
     while (tag_size > 0) {
         // Check if there's enough space for the frame header
         if (tag_size < 10) {
-            printf("ERROR: Invalid frame header in ID3 tag.");
+            printf("ERROR: Invalid frame header in ID3 tag.\n");
             return;
         }
 
@@ -73,7 +73,7 @@ void parse_mp3_metadata(const char *mp3_buffer, size_t tag_size,
 
         // Check if there's enough space for the frame content
         if (tag_size < frame_size) {
-            printf("ERROR: Invalid frame content in ID3 tag.");
+            printf("ERROR: Invalid frame content in ID3 tag.\n");
             return;
         }
 
