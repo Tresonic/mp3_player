@@ -5,10 +5,12 @@
 #include <string.h>
 
 #include "filemanager.h"
+#include "metadata.h"
 
 namespace audiofile {
 
 static uint8_t filebuf[FILE_BUFSIZE];
+static ID3Tag metadata[sizeof(struct ID3Tag)];
 static int file = -1;
 static unsigned long nextBufferByte = 0;
 
@@ -65,8 +67,17 @@ int readNextBuffer() {
             };
             sync_start = find_sync(filebuf, FILE_BUFSIZE);
         }
+
+        /* load metadata if this is the first buffer */
+        if (nextBufferByte == 0) {
+            parse_mp3_metadata((char *)filebuf, sync_start, metadata);
+            print_metadata(metadata);
+            printf("\n\n\n%30x\n\n\n", filebuf + sync_start);
+        }
+
         printf("start offset %i\n", sync_start);
         nextBufferByte += sync_start;
+
         memmove(filebuf, filebuf + sync_start, FILE_BUFSIZE - sync_start);
 
         if (filemanager::readFileToBuffer(file,
