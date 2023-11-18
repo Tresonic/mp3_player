@@ -12,4 +12,5 @@ void close();
 int readNextBuffer();
 void setUsedBytes(int n);
 uint8_t *getBuffer();
+unsigned long getSize();
 } // namespace audiofile

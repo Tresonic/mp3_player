@@ -18,5 +18,5 @@ bool isFinished();
 
 int16_t *getLastFilledBuffer();
 void usedCurrentBuffer();
-int getBitrate();
+unsigned getLength();
 } // namespace player

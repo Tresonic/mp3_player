@@ -112,17 +112,3 @@ void print_metadata(struct ID3Tag *metadata) {
     printf("Year: %s\n", metadata->year);
     printf("Genre: %s\n", metadata->genre);
 }
-
-int calcAvgBitrate(int cur_bitrate, int new_bitrate,
-                   unsigned long sample_counter) {
-    // maybe implement a calc stop after a few sec, as the bitrate probably
-    // won't change that much anymore
-    if (cur_bitrate == new_bitrate || sample_counter == 0) {
-        return cur_bitrate;
-    } else {
-        return (
-            ((unsigned long long)cur_bitrate * sample_counter + new_bitrate) /
-                sample_counter +
-            1);
-    }
-}

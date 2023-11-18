@@ -108,6 +108,8 @@ int decodeNextFrame() {
     return 1;
 }
 
+int getBitrate() { return frame.header.bitrate / 1000; }
+
 unsigned calcAvgBitrate(unsigned cur_bitrate, unsigned new_bitrate,
                         unsigned long counter) {
     // maybe implement a calc stop after a few sec, as the bitrate probably
@@ -129,8 +131,7 @@ void tick() {
 
         bitrate = calcAvgBitrate(bitrate, getBitrate(), bitrate_change_counter);
         bitrate_change_counter++;
-        printf("bitrate: %d\n", getBitrate());
-        printf("%lu: %d\n", bitrate_change_counter, bitrate);
+        printf("length: %.2f\n", getLength() / (float)60);
     }
 }
 
@@ -182,6 +183,8 @@ void stop() {
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
 
-int getBitrate() { return frame.header.bitrate / 1000; }
+unsigned getLength() {
+    return ((float)audiofile::getSize() / 1024 * 8) / ((float)bitrate);
+}
 
 } // namespace player

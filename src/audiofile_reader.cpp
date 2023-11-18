@@ -93,4 +93,6 @@ void setUsedBytes(int n) { nextBufferByte += n; }
 
 uint8_t *getBuffer() { return filebuf; }
 
+unsigned long getSize() { return filemanager::size(file); }
+
 } // namespace audiofile
