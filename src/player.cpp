@@ -24,6 +24,8 @@ static struct mad_frame frame;
 static struct mad_synth synth;
 static int mSampleRate = 48000;
 static uint8_t vol = 128;
+static unsigned bitrate;
+static unsigned long bitrate_change_counter;
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
@@ -106,12 +108,29 @@ int decodeNextFrame() {
     return 1;
 }
 
+unsigned calcAvgBitrate(unsigned cur_bitrate, unsigned new_bitrate,
+                        unsigned long counter) {
+    // maybe implement a calc stop after a few sec, as the bitrate probably
+    // won't change that much anymore
+    if (cur_bitrate == new_bitrate || counter == 0) {
+        return new_bitrate;
+    } else {
+        return ((((unsigned long long)cur_bitrate * counter) + new_bitrate) /
+                (counter + 1));
+    }
+}
+
 void tick() {
     if (mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
         if (decodeNextFrame() == -1) {
             stop();
         }
+
+        bitrate = calcAvgBitrate(bitrate, getBitrate(), bitrate_change_counter);
+        bitrate_change_counter++;
+        printf("bitrate: %d\n", getBitrate());
+        printf("%lu: %d\n", bitrate_change_counter, bitrate);
     }
 }
 
@@ -140,6 +159,7 @@ void play(const char *file) {
     i2s_dac_set_enabled(true);
     playing = true;
     finished = false;
+    bitrate_change_counter = 0;
 }
 
 void togglePause() {
@@ -161,4 +181,7 @@ void stop() {
 
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
+
+int getBitrate() { return frame.header.bitrate / 1000; }
+
 } // namespace player

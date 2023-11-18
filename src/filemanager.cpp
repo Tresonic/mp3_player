@@ -122,4 +122,11 @@ bool eof(int handle) {
     return f_eof(&mFiles[handle]);
 }
 
+unsigned long long size(int handle) {
+    if (handle < 0 || handle >= MAX_OPEN_FILES || !mOpenFiles[handle]) {
+        return -1;
+    }
+    return f_size(&mFiles[handle]);
+}
+
 } // namespace filemanager

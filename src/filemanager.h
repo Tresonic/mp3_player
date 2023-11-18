@@ -14,4 +14,5 @@ unsigned int readFileToBuffer(int handle, void *buffer, int numBytes);
 
 int seek(int handle, unsigned long pos);
 bool eof(int handle);
+unsigned long long size(int handle);
 } // namespace filemanager

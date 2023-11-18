@@ -72,7 +72,7 @@ int readNextBuffer() {
         if (nextBufferByte == 0) {
             parse_mp3_metadata((char *)filebuf, sync_start, metadata);
             print_metadata(metadata);
-            printf("\n\n\n%30x\n\n\n", filebuf + sync_start);
+            // printf("file size: %llu\n", filemanager::size(file));
         }
 
         printf("start offset %i\n", sync_start);
