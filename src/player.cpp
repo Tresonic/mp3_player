@@ -24,7 +24,7 @@ static struct mad_frame frame;
 static struct mad_synth synth;
 static int mSampleRate = 48000;
 static uint8_t vol = 128;
-static unsigned bitrate;
+static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
 
 /// Scales the sample from internal MAD format to int16
@@ -110,15 +110,18 @@ int decodeNextFrame() {
 
 int getBitrate() { return frame.header.bitrate / 1000; }
 
-unsigned calcAvgBitrate(unsigned cur_bitrate, unsigned new_bitrate,
-                        unsigned long counter) {
+// TODO RENAME/ remove
+unsigned long long calcAvgBitrate(unsigned long long cur_bitrate,
+                                  unsigned new_bitrate, unsigned long counter) {
     // maybe implement a calc stop after a few sec, as the bitrate probably
     // won't change that much anymore
-    if (cur_bitrate == new_bitrate || counter == 0) {
+    if (counter == 0) {
         return new_bitrate;
     } else {
-        return ((((unsigned long long)cur_bitrate * counter) + new_bitrate) /
-                (counter + 1));
+        return bitrate + new_bitrate;
+        return (bitrate + new_bitrate / counter + 1);
+        // return ((((unsigned long long)cur_bitrate * counter) + new_bitrate) /
+        //         (counter + 1));
     }
 }
 
@@ -186,7 +189,8 @@ bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
 
 unsigned getLength() {
-    return (audiofile::getSize() * 0.008) / ((float)bitrate);
+    return (audiofile::getSize() * 0.008) /
+           (float)(bitrate / bitrate_change_counter);
 }
 
 } // namespace player
