@@ -18,5 +18,6 @@ bool isFinished();
 
 int16_t *getLastFilledBuffer();
 void usedCurrentBuffer();
+float secToMin(unsigned);
 unsigned getLength();
 } // namespace player

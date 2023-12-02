@@ -110,23 +110,6 @@ int decodeNextFrame() {
 
 int getBitrate() { return frame.header.bitrate / 1000; }
 
-// TODO RENAME/ remove
-unsigned long long calcAvgBitrate(unsigned long long cur_bitrate,
-                                  unsigned new_bitrate, unsigned long counter) {
-    // maybe implement a calc stop after a few sec, as the bitrate probably
-    // won't change that much anymore
-    if (counter == 0) {
-        return new_bitrate;
-    } else {
-        return bitrate + new_bitrate;
-        return (bitrate + new_bitrate / counter + 1);
-        // return ((((unsigned long long)cur_bitrate * counter) + new_bitrate) /
-        //         (counter + 1));
-    }
-}
-
-float secToMin(unsigned sec) { return sec / 60 + (sec % 60) / (float)100; }
-
 void tick() {
     if (mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
@@ -134,9 +117,9 @@ void tick() {
             stop();
         }
 
-        bitrate = calcAvgBitrate(bitrate, getBitrate(), bitrate_change_counter);
+        bitrate = (bitrate_change_counter == 0) ? getBitrate()
+                                                : bitrate + getBitrate();
         bitrate_change_counter++;
-        printf("length: %.2f\n", secToMin(getLength()));
     }
 }
 
@@ -187,6 +170,8 @@ void stop() {
 
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
+
+float secToMin(unsigned sec) { return sec / 60 + (sec % 60) / (float)100; }
 
 unsigned getLength() {
     return (audiofile::getSize() * 0.008) /
