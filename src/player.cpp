@@ -122,6 +122,8 @@ unsigned calcAvgBitrate(unsigned cur_bitrate, unsigned new_bitrate,
     }
 }
 
+float secToMin(unsigned sec) { return sec / 60 + (sec % 60) / (float)100; }
+
 void tick() {
     if (mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
@@ -131,7 +133,7 @@ void tick() {
 
         bitrate = calcAvgBitrate(bitrate, getBitrate(), bitrate_change_counter);
         bitrate_change_counter++;
-        printf("length: %.2f\n", getLength() / (float)60);
+        printf("length: %.2f\n", secToMin(getLength()));
     }
 }
 
@@ -184,7 +186,7 @@ bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
 
 unsigned getLength() {
-    return ((float)audiofile::getSize() / 1024 * 8) / ((float)bitrate);
+    return (audiofile::getSize() * 0.008) / ((float)bitrate);
 }
 
 } // namespace player
