@@ -42,6 +42,8 @@ void serial_ctrl() {
     } else if (c == '-') {
         player::setVol(player::getVol() - 1);
     } else if (c == 'a') {
+        // TODO add functionality to restart current song if its after 5sec of
+        // current song
         prev_queue_index();
         player::stop();
     } else if (c == 'd') {
@@ -56,15 +58,18 @@ int main() {
     // TODO vals to config
     create_queue();
 
-    // TODO testing
-    char *str2 = "Creature.mp3";
-    char *str3 = "Whenever.mp3";
+    char *str1 = "Creature.mp3";
+    char *str2 = "Whenever.mp3";
 
+    add_to_queue(str1, strlen(str1));
     add_to_queue(str2, strlen(str2));
-    add_to_queue(str3, strlen(str3));
 
     while (true) {
-        // TODO add check (rem at end)
+        while (!get_cur_queue()) {
+            serial_ctrl();
+            update_btns();
+        }
+
         player::play(get_cur_queue());
         // TODO check queue index again, if current get_queue_at is null: stop
         while (!player::isFinished()) {
@@ -72,9 +77,7 @@ int main() {
             update_btns();
             player::tick();
         }
-        // wait end of queue
-        while (next_queue_index(true)) {
-        }
+        next_queue_index(true);
     }
 
     filemanager::deinitSd();

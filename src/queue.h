@@ -28,7 +28,8 @@ void create_queue() {
 uint get_queue_index() { return cur_index; }
 
 bool set_queue_index(uint index) {
-    if (index >= 0 && index < next_top_index) {
+    // allow next_top_index to stop after last song
+    if (index >= 0 && index <= next_top_index) {
         cur_index = index;
         return false;
     } else {
