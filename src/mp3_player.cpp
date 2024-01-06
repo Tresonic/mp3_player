@@ -8,6 +8,7 @@
 #include "config.h"
 #include "filemanager.h"
 #include "player.h"
+#include "queue.h"
 
 void init() {
     stdio_init_all();
@@ -40,19 +41,40 @@ void serial_ctrl() {
         player::setVol(player::getVol() + 1);
     } else if (c == '-') {
         player::setVol(player::getVol() - 1);
+    } else if (c == 'a') {
+        prev_queue_index();
+        player::stop();
+    } else if (c == 'd') {
+        next_queue_index();
+        player::stop();
     }
 }
 
 int main() {
     init();
 
-    player::play("pufotest.mp3");
-    puts("play started!");
+    // TODO vals to config
+    create_queue();
 
-    while (!player::isFinished()) {
-        serial_ctrl();
-        update_btns();
-        player::tick();
+    // TODO testing
+    char *str2 = "Creature.mp3";
+    char *str3 = "Whenever.mp3";
+
+    add_to_queue(str2, strlen(str2));
+    add_to_queue(str3, strlen(str3));
+
+    while (true) {
+        // TODO add check (rem at end)
+        player::play(get_cur_queue());
+        // TODO check queue index again, if current get_queue_at is null: stop
+        while (!player::isFinished()) {
+            serial_ctrl();
+            update_btns();
+            player::tick();
+        }
+        // wait end of queue
+        while (next_queue_index(true)) {
+        }
     }
 
     filemanager::deinitSd();
