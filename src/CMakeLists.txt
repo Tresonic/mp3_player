@@ -4,6 +4,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     filemanager.cpp
     audiofile_reader.cpp
     hw_config.c
+    queue.cpp
 )
 
 pico_generate_pio_header(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s_dac.pio)

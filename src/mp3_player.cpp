@@ -54,6 +54,7 @@ void serial_ctrl() {
 
 int main() {
     init();
+    // TODO implement global pause
 
     // TODO vals to config
     create_queue();
@@ -61,8 +62,8 @@ int main() {
     char *str1 = "Creature.mp3";
     char *str2 = "Whenever.mp3";
 
-    add_to_queue(str1, strlen(str1));
-    add_to_queue(str2, strlen(str2));
+    add_to_queue(str1);
+    add_to_queue_at(str2, 0);
 
     while (true) {
         while (!get_cur_queue()) {
@@ -71,8 +72,10 @@ int main() {
         }
 
         player::play(get_cur_queue());
-        // TODO check queue index again, if current get_queue_at is null: stop
+
         while (!player::isFinished()) {
+            // TODO stop on player error (file doesn't exist/ is corrupt, not
+            // mp3, ...)
             serial_ctrl();
             update_btns();
             player::tick();
@@ -81,6 +84,7 @@ int main() {
     }
 
     filemanager::deinitSd();
+    destroy_queue();
 
     puts("Goodbye, world!");
     getchar();
