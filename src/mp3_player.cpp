@@ -27,7 +27,6 @@ void init() {
 
     filemanager::list_dir("/", files, files_len, dirs, dirs_len);
     printf("%s\n%s\n", files, dirs);
-    getchar();
 
     init_btn_handler(player::getVol());
 }
@@ -54,8 +53,6 @@ void serial_ctrl() {
 
 int main() {
     init();
-    // TODO implement global pause
-
     // TODO vals to config
     create_queue();
 
@@ -74,8 +71,6 @@ int main() {
         player::play(get_cur_queue());
 
         while (!player::isFinished()) {
-            // TODO stop on player error (file doesn't exist/ is corrupt, not
-            // mp3, ...)
             serial_ctrl();
             update_btns();
             player::tick();

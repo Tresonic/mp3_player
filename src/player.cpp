@@ -16,7 +16,7 @@ static int16_t mSampleBuffer[SAMPLE_BUF_NUM][AUDIO_BUFSIZE];
 static int mBufferIdx = 0;
 static int mBufferIdxOld = 1;
 
-static bool playing = false;
+static bool playing = true;
 static bool finished = false;
 
 static struct mad_stream stream;
@@ -134,6 +134,12 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
+void enforcePlaying() {
+    // dont force playing if there is no song to play
+    if (!finished)
+        i2s_dac_set_enabled(playing);
+}
+
 void play(const char *file) {
     if (!finished) {
         stop();
@@ -145,26 +151,25 @@ void play(const char *file) {
         return;
     }
     decodeNextFrame();
-    i2s_dac_set_enabled(true);
-    playing = true;
     finished = false;
     bitrate_change_counter = 0;
+    enforcePlaying();
 }
 
 void togglePause() {
+    // this will work if queue is finished. could be disabled by same check as
+    // in enforcePlaying
     if (!playing) {
-        // playStart = true;
         playing = true;
     } else {
         playing = false;
     }
-    i2s_dac_set_enabled(playing);
+    enforcePlaying();
 }
 
 void stop() {
     audiofile::close();
     i2s_dac_set_enabled(false);
-    playing = false;
     finished = true;
 }
 
