@@ -1,5 +1,8 @@
 #include "queue.h"
 
+#include "pico/stdlib.h"
+#include <algorithm>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -9,6 +12,18 @@
 unsigned int cur_index;
 bool changing_index;
 std::vector<std::string> *queue;
+auto rng = std::default_random_engine{};
+
+// only for testing purposes
+void print_queue() {
+    int i = 0;
+    printf("QUEUE -----\n");
+    while (get_queue_at(i)) {
+        printf("%s\n", get_queue_at(i));
+        i++;
+    }
+    printf("----- QUEUE\n");
+}
 
 void create_queue() {
     queue = new std::vector<std::string>;
@@ -16,6 +31,11 @@ void create_queue() {
     (*queue).reserve(20);
     cur_index = 0;
     changing_index = false;
+
+    // setting the seed is only needed once. This will use the time since
+    // startup. in short testing has been random enough for a shuffle
+    // algorithm...
+    rng.seed(int(time_us_64()));
 }
 
 unsigned int get_queue_index() { return cur_index; }
@@ -64,6 +84,15 @@ const char *get_queue_at(unsigned int index) {
 }
 
 const char *get_cur_queue() { return get_queue_at(cur_index); }
+
+void shuffle_queue() {
+    // current element is now first element in queue
+    std::iter_swap((*queue).begin() + cur_index, (*queue).begin());
+    cur_index = 0;
+
+    // randomize rest of queue:
+    std::shuffle((*queue).begin() + 1, (*queue).end(), rng);
+}
 
 void clear_queue_not_index(unsigned int index) {
     for (int i = 0; i < (*queue).size(); i++) {
