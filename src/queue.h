@@ -20,6 +20,8 @@ const char *get_queue_at(unsigned int index);
 
 const char *get_cur_queue();
 
+void shuffle_queue();
+
 void clear_queue_not_index(unsigned int index);
 
 void clear_queue();

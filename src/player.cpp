@@ -186,6 +186,8 @@ void togglePause() {
 }
 
 void stop() {
+    // TODO should probably clear current dac buffer to avoid short playing of
+    // last song when doing pause -> change song -> play
     audiofile::close();
     i2s_dac_set_enabled(false);
     finished = true;

@@ -42,6 +42,9 @@ void serial_ctrl() {
     } else if (c == 'd') {
         next_queue_index();
         player::stop();
+    } else if (c == 's') {
+        printf("shuffel\n");
+        shuffle_queue();
     }
 }
 
