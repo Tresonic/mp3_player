@@ -6,7 +6,7 @@
 // potential problems:
 // queue will automatically size but
 
-int cur_index;
+unsigned int cur_index;
 bool changing_index;
 std::vector<std::string> *queue;
 
@@ -45,11 +45,15 @@ bool next_queue_index(bool end_of_song) {
     }
 }
 
-void add_to_queue_at(const char *str, int index) {
-    (*queue).emplace((*queue).begin() + index, str);
+void add_to_queue_at(const char *str, unsigned int index) {
+    (*queue).insert((*queue).begin() + index, str);
 }
 
-void add_to_queue(const char *str) { (*queue).emplace_back(str); }
+void add_to_queue_end(const char *str) { (*queue).push_back(str); }
+
+void add_to_queue_next(const char *str) {
+    (*queue).insert((*queue).begin() + cur_index + 1, str);
+}
 
 const char *get_queue_at(unsigned int index) {
     if (index < 0 || index >= (*queue).size()) {

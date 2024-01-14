@@ -10,6 +10,7 @@
 #include "pico/multicore.h"
 #include "pico/time.h"
 #include "player.h"
+#include "playlistfile.h"
 #include "queue.h"
 
 void init() {
