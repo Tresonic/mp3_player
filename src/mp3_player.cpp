@@ -63,11 +63,9 @@ int main() {
     char *str1 = "Whenever.mp3";
     char *str2 = "Creature.mp3";
 
-    add_to_queue_end(str1);
-    playlistfile::add_to_queue(
-        "playlist.m3u"); // TODO rem whenever, creature, real live
-    add_to_queue_at(str2, 0);
-    // cre, when, when, cre, real
+    // add_to_queue_end(str1);
+    playlistfile::add_to_queue("playlist.m3u");
+    // add_to_queue_at(str2, 0);
 
     // set_queue_index(1);
 
