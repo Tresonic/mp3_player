@@ -8,6 +8,7 @@
 #include "config.h"
 #include "filemanager.h"
 #include "player.h"
+#include "playlistfile.h"
 #include "queue.h"
 
 void init() {
@@ -56,10 +57,11 @@ int main() {
     // TODO vals to config
     create_queue();
 
-    char *str1 = "Creature.mp3";
-    char *str2 = "Whenever.mp3";
+    char *str1 = "Whenever.mp3";
+    char *str2 = "Creature.mp3";
 
-    add_to_queue(str1);
+    // add_to_queue_end(str1);
+    playlistfile::add_to_queue("playlist.m3u");
     add_to_queue_at(str2, 0);
 
     while (true) {

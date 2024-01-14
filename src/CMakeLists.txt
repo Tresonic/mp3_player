@@ -3,6 +3,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     player.cpp
     filemanager.cpp
     audiofile_reader.cpp
+    playlistfile.cpp
     hw_config.c
     queue.cpp
 )
