@@ -8,6 +8,7 @@
 #include "config.h"
 #include "filemanager.h"
 #include "player.h"
+#include "display.h"
 
 void init() {
     stdio_init_all();
@@ -18,6 +19,9 @@ void init() {
     puts("filemanager initted");
     player::init();
     puts("player initted");
+
+
+    display::init(config::PIN_I2C_CLK, config::PIN_I2C_DATA);
 
     int files_len = 1024;
     int dirs_len = 1024;
@@ -45,8 +49,15 @@ void serial_ctrl() {
 
 int main() {
     init();
+    puts("init complete");
+    display::print(10, 10, "test");
+    puts("print");
+    display::display();
+    puts("display?");
 
-    player::play("pufotest.mp3");
+    while (1);
+
+    player::play("Creature.mp3");
     puts("play started!");
 
     while (!player::isFinished()) {

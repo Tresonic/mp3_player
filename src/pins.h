@@ -9,6 +9,9 @@ const int PIN_CLK = 2;
 const int PIN_I2S_CLK_BASE = 26;
 const int PIN_I2S_DATA = 28;
 
+const int PIN_I2C_CLK = 17;
+const int PIN_I2C_DATA = 16;
+
 const int PIN_ENCODER_A = 18;
 const int PIN_ENCODER_B = 19;
 
