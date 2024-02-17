@@ -3,6 +3,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     player.cpp
     filemanager.cpp
     audiofile_reader.cpp
+    display.cpp
     hw_config.c
     queue.cpp
 )
@@ -14,6 +15,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_stdlib
     pico_multicore
     hardware_pio
+    hardware_i2c
     FatFs_SPI
     libmad
 )

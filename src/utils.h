@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 using RET_TYPE = bool;
 
 #define RET_ERROR 1
