@@ -17,7 +17,7 @@ static int16_t mSampleBuffer[SAMPLE_BUF_NUM][AUDIO_BUFSIZE];
 static int mBufferIdx = 0;
 static int mBufferIdxOld = 1;
 
-static bool playing = true;
+static bool playing = false;
 static bool finished = false;
 
 static const mad_fixed_t volume_vals[] = {
@@ -118,6 +118,8 @@ int decodeNextFrame() {
 int getBitrate() { return frame.header.bitrate / 1000; }
 
 void tick() {
+    if (!playing)
+        return;
     if (mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
         if (decodeNextFrame() == -1) {
@@ -151,6 +153,7 @@ void play(const char *file) {
     if (!finished) {
         stop();
     }
+    playing = true;
     mBufferIdx = 0;
     mBufferIdxOld = 1;
     if (audiofile::open(file) == -1) {

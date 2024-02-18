@@ -152,15 +152,6 @@ void SSD1306_init() {
     SSD1306_send_cmd_list(cmds, count_of(cmds));
 }
 
-static inline int GetFontIndex(uint8_t ch) {
-    if (ch >= 'A' && ch <= 'Z') {
-        return ch - 'A' + 1;
-    } else if (ch >= '0' && ch <= '9') {
-        return ch - '0' + 27;
-    } else
-        return 0; // Not got that char so space.
-}
-
 static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
     if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
         return;
@@ -168,12 +159,11 @@ static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
     // For the moment, only write on Y row boundaries (every 8 vertical pixels)
     y = y / 8;
 
-    ch = toupper(ch);
-    int idx = GetFontIndex(ch);
+    int idx = ch;
     int fb_idx = y * 128 + x;
 
-    for (int i = 0; i < 8; i++) {
-        buf[fb_idx++] = font[idx * 8 + i];
+    for (int i = 0; i < 5; i++) {
+        buf[fb_idx++] = font[idx * 5 + i];
     }
 }
 
@@ -225,12 +215,21 @@ RET_TYPE init(const int scl, const int sda) {
     return RET_SUCCESS;
 }
 
+void putpixel(int x, int y, bool b) {
+    // buf[];
+}
+
 void print(int x, int y, char *str) {
     WriteString(buf, x, y, str);
 }
 
+void printChar(int x, int y, char c) {
+    WriteChar(buf, x, y, c);
+}
+
 void display() {
     render(buf, &frame_area);
+    memset(buf, 0, SSD1306_BUF_LEN);
 }
 
 } // namespace display

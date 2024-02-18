@@ -15,6 +15,6 @@ const int PIN_I2C_DATA = 16;
 const int PIN_ENCODER_A = 18;
 const int PIN_ENCODER_B = 19;
 
-const int PIN_BTN_PAUSE = 21;
+const int PIN_BTN_A = 21;
 
 #endif
