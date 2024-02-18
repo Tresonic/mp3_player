@@ -72,7 +72,6 @@ int main() {
     display::display();
     puts("display?");
 
-
     player::play("Creature.mp3");
     puts("play started!");
 
