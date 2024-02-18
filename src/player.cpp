@@ -9,6 +9,7 @@
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
+#include "pico/platform.h"
 
 namespace player {
 
@@ -19,16 +20,22 @@ static int mBufferIdxOld = 1;
 static bool playing = true;
 static bool finished = false;
 
+static const mad_fixed_t volume_vals[] = {
+    mad_f_tofixed(.05), mad_f_tofixed(.1), mad_f_tofixed(.2), mad_f_tofixed(.5),
+    mad_f_tofixed(.7),  mad_f_tofixed(1),  mad_f_tofixed(2)};
+
 static struct mad_stream stream;
 static struct mad_frame frame;
 static struct mad_synth synth;
 static int mSampleRate = 48000;
-static uint8_t vol = 128;
+static uint8_t vol_idx = count_of(volume_vals)/2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
+    sample = mad_f_mul(sample, volume_vals[vol_idx]);
+
     /* round */
     if (sample >= MAD_F_ONE)
         return (INT16_MAX);
@@ -36,10 +43,7 @@ inline static int16_t scale(mad_fixed_t sample) {
         return (INT16_MIN);
 
     /* Conversion. */
-    sample = sample >> (MAD_F_FRACBITS - 15);
-
-    /* Volume scaling */
-    return static_cast<int16_t>(static_cast<int32_t>(sample) * vol >> 8);
+    return sample >> (MAD_F_FRACBITS - 15);
 }
 
 void init() {
@@ -50,11 +54,14 @@ void init() {
 }
 
 void setVol(uint8_t v) {
-    printf("setting vol: %i\n", (int)v);
-    vol = v;
+    if (v >= count_of(volume_vals))
+        vol_idx = count_of(volume_vals) - 1;
+    else
+        vol_idx = v;
+    printf("setting vol: %i\n", (int)vol_idx);
 }
 
-uint8_t getVol() { return vol; }
+uint8_t getVol() { return vol_idx; }
 
 int getSampleRate() { return mSampleRate; }
 

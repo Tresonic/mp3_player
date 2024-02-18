@@ -7,12 +7,15 @@
 #include "btn_handler.h"
 #include "config.h"
 #include "filemanager.h"
+#include "pico/time.h"
 #include "player.h"
 #include "queue.h"
 
 void init() {
     stdio_init_all();
-    getchar();
+    sleep_ms(200);
+    puts("hello");
+    // getchar();
     puts("starting");
 
     filemanager::initSd();
