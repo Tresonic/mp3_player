@@ -1,13 +1,17 @@
 #include "display.h"
 
+#include "config.h"
 #include "font.h"
 
 #include "hardware/i2c.h"
+#include "pico/platform.h"
 #include "pico/stdlib.h"
+#include <cstdint>
+#include <cstring>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 
 // #include <stdio.h>
 
@@ -18,15 +22,17 @@
 
 // 400 is usual, but often these can be overclocked to improve display response.
 // Tested at 1000 on both 32 and 84 pixel height devices and it worked.
-#define SSD1306_I2C_CLK 400
+#define SSD1306_I2C_CLK 1000
 // #define SSD1306_I2C_CLK             1000
 
 // commands (see datasheet)
 #define SSD1306_SET_MEM_MODE _u(0x20)
 #define SSD1306_SET_COL_ADDR _u(0x21)
-#define SSD1306_SET_PAGE_ADDR _u(0x22)
+#define SSD1306_SET_PAGE_ADDR _u(0xb0)
 #define SSD1306_SET_HORIZ_SCROLL _u(0x26)
 #define SSD1306_SET_SCROLL _u(0x2E)
+
+#define SSD1306_NOP _u(0xE3)
 
 #define SSD1306_SET_DISP_START_LINE _u(0x40)
 
@@ -57,11 +63,7 @@
 #define SSD1306_READ_MODE _u(0xFF)
 
 namespace display {
-void calc_render_area_buflen(struct render_area *area) {
-    // calculate how long the flattened buffer will be for a render area
-    area->buflen = (area->end_col - area->start_col + 1) *
-                   (area->end_page - area->start_page + 1);
-}
+uint8_t frameBuffer[SSD1306_BUF_LEN];
 
 void SSD1306_send_cmd(uint8_t cmd) {
     // I2C write process expects a control byte followed by data
@@ -95,40 +97,32 @@ void SSD1306_send_buf(uint8_t buf[], int buflen) {
     free(temp_buf);
 }
 
+void SSD1306_send_page(uint8_t buf[]) {
+    uint8_t temp_buf[129];
+    temp_buf[0] = 0x40;
+    memcpy(temp_buf + 1, buf, 128);
+    i2c_write_blocking(i2c_default, SSD1306_I2C_ADDR, temp_buf, sizeof temp_buf,
+                       false);
+}
+
 void SSD1306_init() {
     // Some of these commands are not strictly necessary as the reset
     // process defaults to some of these but they are shown here
     // to demonstrate what the initialization sequence looks like
     // Some configuration values are recommended by the board manufacturer
 
+
+    // SSD1306_send_cmd_list(cmds, count_of(cmds));
     uint8_t cmds[] = {
-        SSD1306_SET_DISP, // set display off
-        /* memory mapping */
-        SSD1306_SET_MEM_MODE, // set memory address mode 0 = horizontal, 1 =
-                              // vertical, 2 = page
-        0x00,                 // horizontal addressing mode
-        /* resolution and layout */
-        SSD1306_SET_DISP_START_LINE, // set display start line to 0
-        SSD1306_SET_SEG_REMAP |
-            0x01, // set segment re-map, column address 127 is mapped to SEG0
-        SSD1306_SET_MUX_RATIO, // set multiplex ratio
-        SSD1306_HEIGHT - 1,    // Display height - 1
+        SSD1306_SET_DISP_OFFSET, // set display offset
+        0x00,                    // no offset
+        SSD1306_SET_DISP_START_LINE | 0x00,
+
+        SSD1306_SET_SEG_REMAP | 0x01,
         SSD1306_SET_COM_OUT_DIR |
             0x08, // set COM (common) output scan direction. Scan from bottom
                   // up, COM[N-1] to COM0
-        SSD1306_SET_DISP_OFFSET, // set display offset
-        0x00,                    // no offset
-        SSD1306_SET_COM_PIN_CFG, // set COM (common) pins hardware
-                                 // configuration. Board specific magic number.
-                                 // 0x02 Works for 128x32, 0x12 Possibly works
-                                 // for 128x64. Other options 0x22, 0x32
-#if ((SSD1306_WIDTH == 128) && (SSD1306_HEIGHT == 32))
-        0x02,
-#elif ((SSD1306_WIDTH == 128) && (SSD1306_HEIGHT == 64))
-        0x12,
-#else
-        0x02,
-#endif
+
         /* timing and driving scheme */
         SSD1306_SET_DISP_CLK_DIV, // set display clock divide ratio
         0x80,                     // div ratio of 1, standard freq
@@ -139,20 +133,27 @@ void SSD1306_init() {
         /* display */
         SSD1306_SET_CONTRAST, // set contrast control
         0xFF,
-        SSD1306_SET_ENTIRE_ON,   // set entire display on to follow RAM content
-        SSD1306_SET_NORM_DISP,   // set normal (not inverted) display
-        SSD1306_SET_CHARGE_PUMP, // set charge pump
-        0x14,                    // Vcc internally generated on our board
+        SSD1306_SET_ENTIRE_ON, // set entire display on to follow RAM content
+        SSD1306_SET_NORM_DISP, // set normal (not inverted) display
+                               // Vcc internally generated on our board
         SSD1306_SET_SCROLL |
             0x00, // deactivate horizontal scrolling if set. This is necessary
-                  // as memory writes will corrupt if scrolling was enabled
+                  //   as memory writes will corrupt if scrolling was enabled
+
         SSD1306_SET_DISP | 0x01, // turn display on
+        SSD1306_SET_CHARGE_PUMP, // set charge pump
+        0x14,
     };
+
+    if (config::HAS_SH1106) {
+        cmds[count_of(cmds) - 1] = SSD1306_NOP;
+        cmds[count_of(cmds) - 2] = SSD1306_NOP;
+    }
 
     SSD1306_send_cmd_list(cmds, count_of(cmds));
 }
 
-static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
+static void WriteChar(int16_t x, int16_t y, uint8_t ch) {
     if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
         return;
 
@@ -163,38 +164,43 @@ static void WriteChar(uint8_t *buf, int16_t x, int16_t y, uint8_t ch) {
     int fb_idx = y * 128 + x;
 
     for (int i = 0; i < 5; i++) {
-        buf[fb_idx++] = font[idx * 5 + i];
+        frameBuffer[fb_idx++] = font[idx * 5 + i];
     }
 }
 
-static void WriteString(uint8_t *buf, int16_t x, int16_t y, char *str) {
+static void WriteString(int16_t x, int16_t y, char *str) {
     // Cull out any string off the screen
     if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
         return;
 
     while (*str) {
-        WriteChar(buf, x, y, *str++);
+        WriteChar(x, y, *str++);
         x += 8;
     }
 }
 
-void render(uint8_t *buf, struct render_area *area) {
-    // update a portion of the display with a render area
-    uint8_t cmds[] = {SSD1306_SET_COL_ADDR,  area->start_col,  area->end_col,
-                      SSD1306_SET_PAGE_ADDR, area->start_page, area->end_page};
+void render() {
+    uint8_t cmds[] = {
+        SSD1306_SET_PAGE_ADDR, // page addr 0
+        0x02, // col start at 2 for SH1106
+        0xe0, // RW-Start
+    };
 
-    SSD1306_send_cmd_list(cmds, count_of(cmds));
-    SSD1306_send_buf(buf, area->buflen);
+    if (!config::HAS_SH1106) {
+        cmds[1] = SSD1306_NOP;
+    }
+
+    uint8_t cmds_end[] = {
+        0xee, // RW-End
+    };
+
+    for (uint i = 0; i < 8; i++) {
+        SSD1306_send_cmd_list(cmds, count_of(cmds));
+        SSD1306_send_page(&frameBuffer[i * SSD1306_WIDTH]);
+        SSD1306_send_cmd_list(cmds_end, count_of(cmds_end));
+        cmds[0] += 1;
+    }
 }
-
-struct render_area frame_area = {
-    start_col : 0,
-    end_col : SSD1306_WIDTH - 1,
-    start_page : 0,
-    end_page : SSD1306_NUM_PAGES - 1
-};
-
-uint8_t buf[SSD1306_BUF_LEN];
 
 RET_TYPE init(const int scl, const int sda) {
     puts("initting display!");
@@ -207,10 +213,8 @@ RET_TYPE init(const int scl, const int sda) {
 
     SSD1306_init();
 
-    calc_render_area_buflen(&frame_area);
-
-    memset(buf, 0, SSD1306_BUF_LEN);
-    render(buf, &frame_area);
+    memset(frameBuffer, 0, SSD1306_BUF_LEN);
+    render();
 
     return RET_SUCCESS;
 }
@@ -219,17 +223,13 @@ void putpixel(int x, int y, bool b) {
     // buf[];
 }
 
-void print(int x, int y, char *str) {
-    WriteString(buf, x, y, str);
-}
+void print(int x, int y, char *str) { WriteString(x, y, str); }
 
-void printChar(int x, int y, char c) {
-    WriteChar(buf, x, y, c);
-}
+void printChar(int x, int y, char c) { WriteChar(x, y, c); }
 
 void display() {
-    render(buf, &frame_area);
-    memset(buf, 0, SSD1306_BUF_LEN);
+    render();
+    memset(frameBuffer, 0, SSD1306_BUF_LEN);
 }
 
 } // namespace display

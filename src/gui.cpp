@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "hardware/timer.h"
 #include "inputhandler.h"
 #include "display.h"
 #include "config.h"
@@ -30,6 +31,7 @@ void init() {
     for (int i=0; i<8; ++i) {
         fileList[i] = (char*)malloc(128);
         dirList[i] = (char*)malloc(128);
+        fileList[i][0] = dirList[i][0] = 0;
     }
     currentDir = (char*)malloc(64);
     strcpy(currentDir, "/");
@@ -38,6 +40,9 @@ void init() {
 }
 
 void tick() {
+    static unsigned int last = 0;
+    unsigned int now = time_us_32();
+
     int rot;
     switch (state) {
     case List:
@@ -60,10 +65,12 @@ void tick() {
             player::play(fileList[listIdx]);
         }
 
-        if (dirty) {
+        if (dirty && now-last > 100000u) {
+            last = now;
             dirty = false;
             puts("dirty");
             for (int l=0; l<8; ++l) {
+                if (fileList[l][0] == 0) break;
                 display::print(6, l*8, fileList[l]);
                 puts(fileList[l]);
             }

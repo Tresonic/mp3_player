@@ -1,6 +1,11 @@
 #ifndef PINS_H
 #define PINS_H
 
+// const int PIN_MOSI = 7;
+// const int PIN_MISO = 4;
+// const int PIN_SS = 5;
+// const int PIN_CLK = 6;
+
 const int PIN_MOSI = 3;
 const int PIN_MISO = 0;
 const int PIN_SS = 1;
