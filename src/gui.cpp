@@ -37,6 +37,9 @@ void init() {
     strcpy(currentDir, "/");
 
     inputhandler::init();
+    while (true) {
+        tick();
+    }
 }
 
 void tick() {

@@ -6,10 +6,11 @@
 
 #include "config.h"
 #include "filemanager.h"
+#include "gui.h"
+#include "pico/multicore.h"
 #include "pico/time.h"
 #include "player.h"
 #include "queue.h"
-#include "gui.h"
 
 void init() {
     stdio_init_all();
@@ -20,7 +21,8 @@ void init() {
     player::init();
     puts("player initted");
 
-    gui::init();
+    // gui::init();
+    multicore_launch_core1(gui::init);
 }
 
 void serial_ctrl() {
@@ -47,9 +49,8 @@ int main() {
     init();
 
     puts("init complete");
-
     while (true) {
-        gui::tick();
+        // gui::tick();
         serial_ctrl();
         player::tick();
     }
