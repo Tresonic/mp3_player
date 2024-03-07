@@ -30,11 +30,9 @@ Buttonpress get_btn_a() {
         last = now;
     } else if (thisIt && !oldIt && now - last > 10000) {
         if (now - last < 750000) {
-            puts("shortpress");
             last = now;
             return Buttonpress::Short;
         } else {
-            puts("longpress");
             last = now;
             return Buttonpress::Long;
         }
