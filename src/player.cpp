@@ -77,7 +77,7 @@ int decodeNextFrame() {
 
     mad_stream_buffer(&stream, buf_ptr, FILE_BUFSIZE);
     int rc = mad_frame_decode(&frame, &stream);
-    if (rc == 0) {
+    if (err != -1 && rc == 0) {
         // std::cout << stream.next_frame - filebuf << " offset\n";
         audiofile::setUsedBytes(stream.next_frame - buf_ptr);
         // std::cout << "decoded!!\n";
