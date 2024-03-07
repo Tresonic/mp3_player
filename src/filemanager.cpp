@@ -21,13 +21,13 @@ static sd_card_t *mSD;
 static FIL mFiles[MAX_OPEN_FILES];
 static bool mOpenFiles[MAX_OPEN_FILES];
 
-RET_TYPE list_dir(const char *path, char **files, int files_len, char **dirs,
-                  int dirs_len) {
+RET_TYPE list_dir(const char *path, char **files, int &files_len, char **dirs,
+                  int &dirs_len) {
     FRESULT res;
     DIR dir;
     FILINFO fno;
-    int files_index = 0;
-    int dirs_index = 0;
+    files_len = 0;
+    dirs_len = 0;
 
     res = f_opendir(&dir, path);
     if (res == FR_OK) {
@@ -38,14 +38,14 @@ RET_TYPE list_dir(const char *path, char **files, int files_len, char **dirs,
 
             int len = strlen(fno.fname);
             if (fno.fattrib & AM_DIR) {
-                if (dirs_index < dirs_len) {
-                    strcpy(dirs[dirs_index], fno.fname);
-                    dirs_index++;
+                if (dirs_len < config::MAX_FILES_IN_LIST) {
+                    strcpy(dirs[dirs_len], fno.fname);
+                    dirs_len++;
                 }
             } else {
-                if (files_index < files_len) {
-                    strcpy(files[files_index], fno.fname);
-                    files_index++;
+                if (files_len < config::MAX_FILES_IN_LIST) {
+                    strcpy(files[files_len], fno.fname);
+                    files_len++;
                 }
             }
         }
