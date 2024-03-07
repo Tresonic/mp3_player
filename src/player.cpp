@@ -2,11 +2,11 @@
 
 #include "hardware/timer.h"
 #include <cstdint>
+#include <cstring>
 
 #include "mad.h"
 
 #include "audiofile_reader.h"
-#include <cstring>
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
@@ -30,7 +30,7 @@ static struct mad_stream stream;
 static struct mad_frame frame;
 static struct mad_synth synth;
 static int mSampleRate = 48000;
-static uint8_t vol_idx = count_of(volume_vals)/2;
+static uint8_t vol_idx = count_of(volume_vals) / 2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
 static char curFile[config::MAX_FILE_PATH_LEN];
@@ -49,9 +49,7 @@ inline static int16_t scale(mad_fixed_t sample) {
     return sample >> (MAD_F_FRACBITS - 15);
 }
 
-void init() {
-    init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
-}
+void init() { init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA); }
 
 void setVol(uint8_t v) {
     if (v >= count_of(volume_vals))
@@ -136,6 +134,9 @@ void tick() {
             puts("could not open file");
             return;
         }
+        mad_stream_init(&stream);
+        mad_frame_init(&frame);
+        mad_synth_init(&synth);
         decodeNextFrame();
         finished = false;
         bitrate_change_counter = 0;
@@ -168,13 +169,11 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
 void play(const char *file) {
-    newSong = true;
-    // This function is called from the second core so the current file must be saved and then read from tick() by the first core
+    // This function is called from the second core so the current file must be
+    // saved and then read from tick() by the first core
     strcpy(curFile, file);
 
-    mad_stream_init(&stream);
-    mad_frame_init(&frame);
-    mad_synth_init(&synth);
+    newSong = true;
 }
 
 void togglePause() {
@@ -203,7 +202,9 @@ void stop() {
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
 
-float secToMin(unsigned sec) { return sec / 60 + (sec % 60) / (float)100; }
+float secToMin(unsigned sec) {
+    return float(sec / 60) + (sec % 60) / (float)100;
+}
 
 unsigned getLength() {
     return (audiofile::getSize() * 0.008) /
