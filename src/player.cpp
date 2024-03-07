@@ -20,7 +20,7 @@ static int mBufferIdxOld = 1;
 
 static bool playing = false;
 static bool finished = false;
-static bool playCalled = false;
+static bool newSong = false;
 
 static const mad_fixed_t volume_vals[] = {
     mad_f_tofixed(.05), mad_f_tofixed(.1), mad_f_tofixed(.2), mad_f_tofixed(.5),
@@ -127,8 +127,8 @@ void enforcePlaying() {
 }
 
 void tick() {
-    if (playCalled) {
-        playCalled = false;
+    if (newSong) {
+        newSong = false;
         if (!finished) {
             stop();
         }
@@ -171,7 +171,8 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
 void play(const char *file) {
-    playCalled = true;
+    newSong = true;
+    // This function is called from the second core so the current file must be saved and then read from tick() by the first core
     strcpy(curFile, file);
 }
 
