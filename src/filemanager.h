@@ -3,10 +3,10 @@
 #include "utils.h"
 
 namespace filemanager {
-RET_TYPE list_dir(const char *path, char *files, int files_len, char *dirs,
+RET_TYPE list_dir(const char *path, char **files, int files_len, char **dirs,
                   int dirs_len);
 
-void initSd();
+void init();
 void deinitSd();
 int openFile(const char *path);
 void closeFile(int handle);

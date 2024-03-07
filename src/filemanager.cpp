@@ -21,7 +21,7 @@ static sd_card_t *mSD;
 static FIL mFiles[MAX_OPEN_FILES];
 static bool mOpenFiles[MAX_OPEN_FILES];
 
-RET_TYPE list_dir(const char *path, char *files, int files_len, char *dirs,
+RET_TYPE list_dir(const char *path, char **files, int files_len, char **dirs,
                   int dirs_len) {
     FRESULT res;
     DIR dir;
@@ -38,21 +38,18 @@ RET_TYPE list_dir(const char *path, char *files, int files_len, char *dirs,
 
             int len = strlen(fno.fname);
             if (fno.fattrib & AM_DIR) {
-                if (dirs_index + len < dirs_len) {
-                    strcpy(&dirs[dirs_index], fno.fname);
-                    dirs_index += len;
-                    dirs[dirs_index++] = '\n';
+                if (dirs_index < dirs_len) {
+                    strcpy(dirs[dirs_index], fno.fname);
+                    dirs_index++;
                 }
             } else {
-                if (files_index + len < files_len) {
-                    strcpy(&files[files_index], fno.fname);
-                    files_index += len;
-                    files[files_index++] = '\n';
+                if (files_index < files_len) {
+                    strcpy(files[files_index], fno.fname);
+                    files_index++;
                 }
             }
         }
-        dirs[dirs_index] = '\0';
-        files[files_index] = '\0';
+
         f_closedir(&dir);
         return RET_SUCCESS;
     } else {
@@ -60,7 +57,7 @@ RET_TYPE list_dir(const char *path, char *files, int files_len, char *dirs,
     }
 }
 
-void initSd() {
+void init() {
     time_init();
 
     // See FatFs - Generic FAT Filesystem Module, "Application Interface",

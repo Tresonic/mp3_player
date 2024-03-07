@@ -3,8 +3,12 @@ add_executable(${CMAKE_PROJECT_NAME}
     player.cpp
     filemanager.cpp
     audiofile_reader.cpp
-    hw_config.c
+    display.cpp
     queue.cpp
+    inputhandler.cpp
+    hw_config.c
+    gui.cpp
+    gui_filesystem.cpp
 )
 
 pico_generate_pio_header(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s_dac.pio)
@@ -14,6 +18,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     pico_stdlib
     pico_multicore
     hardware_pio
+    hardware_i2c
     FatFs_SPI
     libmad
 )

@@ -2,6 +2,7 @@
 
 #include "hardware/timer.h"
 #include <cstdint>
+#include <cstring>
 
 #include "mad.h"
 
@@ -17,8 +18,9 @@ static int16_t mSampleBuffer[SAMPLE_BUF_NUM][AUDIO_BUFSIZE];
 static int mBufferIdx = 0;
 static int mBufferIdxOld = 1;
 
-static bool playing = true;
+static bool playing = false;
 static bool finished = false;
+static bool newSong = false;
 
 static const mad_fixed_t volume_vals[] = {
     mad_f_tofixed(.05), mad_f_tofixed(.1), mad_f_tofixed(.2), mad_f_tofixed(.5),
@@ -28,9 +30,10 @@ static struct mad_stream stream;
 static struct mad_frame frame;
 static struct mad_synth synth;
 static int mSampleRate = 48000;
-static uint8_t vol_idx = count_of(volume_vals)/2;
+static uint8_t vol_idx = count_of(volume_vals) / 2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
+static char curFile[config::MAX_FILE_PATH_LEN];
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
@@ -46,12 +49,7 @@ inline static int16_t scale(mad_fixed_t sample) {
     return sample >> (MAD_F_FRACBITS - 15);
 }
 
-void init() {
-    init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
-    mad_stream_init(&stream);
-    mad_frame_init(&frame);
-    mad_synth_init(&synth);
-}
+void init() { init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA); }
 
 void setVol(uint8_t v) {
     if (v >= count_of(volume_vals))
@@ -74,7 +72,7 @@ int decodeNextFrame() {
 
     mad_stream_buffer(&stream, buf_ptr, FILE_BUFSIZE);
     int rc = mad_frame_decode(&frame, &stream);
-    if (rc == 0) {
+    if (err != -1 && rc == 0) {
         // std::cout << stream.next_frame - filebuf << " offset\n";
         audiofile::setUsedBytes(stream.next_frame - buf_ptr);
         // std::cout << "decoded!!\n";
@@ -117,7 +115,36 @@ int decodeNextFrame() {
 
 int getBitrate() { return frame.header.bitrate / 1000; }
 
+void enforcePlaying() {
+    // dont force playing if there is no song to play
+    if (!finished)
+        i2s_dac_set_enabled(playing);
+}
+
 void tick() {
+    if (newSong) {
+        newSong = false;
+        if (!finished) {
+            stop();
+        }
+        playing = true;
+        mBufferIdx = 0;
+        mBufferIdxOld = 1;
+        if (audiofile::open(curFile) == -1) {
+            puts("could not open file");
+            return;
+        }
+        mad_stream_init(&stream);
+        mad_frame_init(&frame);
+        mad_synth_init(&synth);
+        decodeNextFrame();
+        finished = false;
+        bitrate_change_counter = 0;
+        enforcePlaying();
+    }
+
+    if (!playing)
+        return;
     if (mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
         if (decodeNextFrame() == -1) {
@@ -141,26 +168,12 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
-void enforcePlaying() {
-    // dont force playing if there is no song to play
-    if (!finished)
-        i2s_dac_set_enabled(playing);
-}
-
 void play(const char *file) {
-    if (!finished) {
-        stop();
-    }
-    mBufferIdx = 0;
-    mBufferIdxOld = 1;
-    if (audiofile::open(file) == -1) {
-        puts("could not open file");
-        return;
-    }
-    decodeNextFrame();
-    finished = false;
-    bitrate_change_counter = 0;
-    enforcePlaying();
+    // This function is called from the second core so the current file must be
+    // saved and then read from tick() by the first core
+    strcpy(curFile, file);
+
+    newSong = true;
 }
 
 void togglePause() {
@@ -178,12 +191,20 @@ void stop() {
     audiofile::close();
     i2s_dac_set_enabled(false);
     finished = true;
+
+    memset(mSampleBuffer, 0, SAMPLE_BUF_NUM * AUDIO_BUFSIZE * sizeof(int16_t));
+
+    mad_stream_finish(&stream);
+    mad_frame_finish(&frame);
+    mad_synth_finish(&synth);
 }
 
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
 
-float secToMin(unsigned sec) { return sec / 60 + (sec % 60) / (float)100; }
+float secToMin(unsigned sec) {
+    return float(sec / 60) + (sec % 60) / (float)100;
+}
 
 unsigned getLength() {
     return (audiofile::getSize() * 0.008) /
