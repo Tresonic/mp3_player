@@ -153,7 +153,7 @@ void SSD1306_init() {
     SSD1306_send_cmd_list(cmds, count_of(cmds));
 }
 
-static void WriteChar(int16_t x, int16_t y, uint8_t ch) {
+static void WriteChar(int16_t x, int16_t y, const uint8_t ch) {
     if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
         return;
 
@@ -168,13 +168,14 @@ static void WriteChar(int16_t x, int16_t y, uint8_t ch) {
     }
 }
 
-static void WriteString(int16_t x, int16_t y, char *str) {
+static void WriteString(int16_t x, int16_t y, const char *str) {
     // Cull out any string off the screen
+    char *str_ptr = (char *)str;
     if (x > SSD1306_WIDTH - 8 || y > SSD1306_HEIGHT - 8)
         return;
 
-    while (*str) {
-        WriteChar(x, y, *str++);
+    while (*str_ptr) {
+        WriteChar(x, y, *str_ptr++);
         x += 8;
     }
 }
@@ -224,9 +225,9 @@ void putpixel(int x, int y, bool b) {
     // buf[];
 }
 
-void print(int x, int y, char *str) { WriteString(x, y, str); }
+void print(int x, int y, const char *str) { WriteString(x, y, str); }
 
-void printChar(int x, int y, char c) { WriteChar(x, y, c); }
+void printChar(int x, int y, const char c) { WriteChar(x, y, c); }
 
 void display() {
     render();
