@@ -25,20 +25,21 @@ Buttonpress get_btn_a() {
     static bool oldIt = true;
     static unsigned int last = 0;
     bool thisIt = gpio_get(config::PIN_BTN_A);
+    Buttonpress ret_btn = Buttonpress::None;
 
     if (!thisIt && oldIt) {
         last = now;
     } else if (thisIt && !oldIt && now - last > 10000) {
         if (now - last < 750000) {
             last = now;
-            return Buttonpress::Short;
+            ret_btn = Buttonpress::Short;
         } else {
             last = now;
-            return Buttonpress::Long;
+            ret_btn = Buttonpress::Long;
         }
     }
     oldIt = thisIt;
 
-    return Buttonpress::None;
+    return ret_btn;
 }
 } // namespace inputhandler
