@@ -26,12 +26,15 @@ Buttonpress get_btn_a() {
     static unsigned int last = 0;
     unsigned int now = time_us_32();
     
-    static bool old = true;
-    if (!gpio_get(config::PIN_BTN_A) && old && now - last > 300000) {
-        old = true;
+    static bool oldIt = true;
+    bool thisIt = gpio_get(config::PIN_BTN_A);
+    if (!thisIt && oldIt && now - last > 300000) {
+        oldIt = true;
         last = now;
         return Buttonpress::Short;
     }
+    oldIt = thisIt;
+
     return Buttonpress::None;
 }
 }
