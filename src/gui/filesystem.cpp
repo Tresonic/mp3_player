@@ -16,7 +16,7 @@ namespace gui::filesystem {
 
     bool dirty = true;
     bool newDir = true;
-    uint listIdx = 0;
+    int listIdx = 0;
     char** fileList;
     int fileListLen;
     char** dirList;
@@ -43,6 +43,10 @@ namespace gui::filesystem {
     }
 
     void tick() {
+        int isSubDir = strcmp(currentDir, "/") != 0;
+        // TODO implement scroll (remove %8)
+        int maxListIdx = (dirListLen + fileListLen + isSubDir) % 8;
+
         if (newDir) {
             newDir = false;
             listIdx = 0;
@@ -53,15 +57,19 @@ namespace gui::filesystem {
         int rot = inputhandler::get_rot();
         if (rot) {
             listIdx += rot;
+
+            // keep cursor in bounds
+            if (listIdx < 0) {
+                listIdx = maxListIdx - 1;
+            } else if (listIdx >= maxListIdx) {
+                listIdx = 0;
+            }
+
+            // TODO scroll
             dirty = true;
-            listIdx %= 8;
         }
 
         if(inputhandler::get_btn_a() == Buttonpress::Short) {
-            printf("idxes: %d %d\n", listIdx, dirListLen);
-
-            int isSubDir = strcmp(currentDir, "/") != 0;
-
             if (listIdx == 0 && isSubDir) {
                 // is currently a subdirectory -> first index is back button -> remove last dir
                 for (int i = strlen(currentDir) - 2; i >= 0; i--) {
