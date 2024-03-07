@@ -21,7 +21,6 @@ void init() {
     player::init();
     puts("player initted");
 
-    // gui::init();
     multicore_launch_core1(gui::init);
 }
 
@@ -50,7 +49,6 @@ int main() {
 
     puts("init complete");
     while (true) {
-        // gui::tick();
         serial_ctrl();
         player::tick();
     }

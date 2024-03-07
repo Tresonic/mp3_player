@@ -4,7 +4,6 @@
 #include "font.h"
 
 #include "hardware/i2c.h"
-#include "pico/multicore.h"
 #include "pico/platform.h"
 #include "pico/stdlib.h"
 #include <cstdint>
@@ -217,7 +216,6 @@ RET_TYPE init(const int scl, const int sda) {
     memset(frameBuffer, 0, SSD1306_BUF_LEN);
 
     render();
-    // multicore_launch_core1(render);
 
     return RET_SUCCESS;
 }
@@ -232,7 +230,6 @@ void printChar(int x, int y, char c) { WriteChar(x, y, c); }
 
 void display() {
     render();
-    // multicore_launch_core1(render);
     memset(frameBuffer, 0, SSD1306_BUF_LEN);
 }
 
