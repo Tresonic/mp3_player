@@ -6,6 +6,7 @@
 #include "mad.h"
 
 #include "audiofile_reader.h"
+#include <cstring>
 #include "config.h"
 #include "filemanager.h"
 #include "i2s_dac.h"
@@ -19,6 +20,7 @@ static int mBufferIdxOld = 1;
 
 static bool playing = false;
 static bool finished = false;
+static bool playCalled = false;
 
 static const mad_fixed_t volume_vals[] = {
     mad_f_tofixed(.05), mad_f_tofixed(.1), mad_f_tofixed(.2), mad_f_tofixed(.5),
@@ -31,6 +33,7 @@ static int mSampleRate = 48000;
 static uint8_t vol_idx = count_of(volume_vals)/2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
+static char curFile[config::MAX_FILE_PATH_LEN];
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
@@ -117,7 +120,31 @@ int decodeNextFrame() {
 
 int getBitrate() { return frame.header.bitrate / 1000; }
 
+void enforcePlaying() {
+    // dont force playing if there is no song to play
+    if (!finished)
+        i2s_dac_set_enabled(playing);
+}
+
 void tick() {
+    if (playCalled) {
+        playCalled = false;
+        if (!finished) {
+            stop();
+        }
+        playing = true;
+        mBufferIdx = 0;
+        mBufferIdxOld = 1;
+        if (audiofile::open(curFile) == -1) {
+            puts("could not open file");
+            return;
+        }
+        decodeNextFrame();
+        finished = false;
+        bitrate_change_counter = 0;
+        enforcePlaying();
+    }
+
     if (!playing)
         return;
     if (mBufferIdx != mBufferIdxOld) {
@@ -143,27 +170,9 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
-void enforcePlaying() {
-    // dont force playing if there is no song to play
-    if (!finished)
-        i2s_dac_set_enabled(playing);
-}
-
 void play(const char *file) {
-    if (!finished) {
-        stop();
-    }
-    playing = true;
-    mBufferIdx = 0;
-    mBufferIdxOld = 1;
-    if (audiofile::open(file) == -1) {
-        puts("could not open file");
-        return;
-    }
-    decodeNextFrame();
-    finished = false;
-    bitrate_change_counter = 0;
-    enforcePlaying();
+    playCalled = true;
+    strcpy(curFile, file);
 }
 
 void togglePause() {

@@ -29,11 +29,11 @@ void init() {
     fileList = (char**)malloc(8 * sizeof(char*));
     dirList = (char**)malloc(8 * sizeof(char*));
     for (int i=0; i<8; ++i) {
-        fileList[i] = (char*)malloc(128);
-        dirList[i] = (char*)malloc(128);
+        fileList[i] = (char*)malloc(config::MAX_FILE_PATH_LEN);
+        dirList[i] = (char*)malloc(config::MAX_FILE_PATH_LEN);
         fileList[i][0] = dirList[i][0] = 0;
     }
-    currentDir = (char*)malloc(64);
+    currentDir = (char*)malloc(config::MAX_FILE_PATH_LEN);
     strcpy(currentDir, "/");
 
     inputhandler::init();

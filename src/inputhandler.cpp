@@ -27,7 +27,7 @@ Buttonpress get_btn_a() {
     unsigned int now = time_us_32();
     
     static bool old = true;
-    if (!gpio_get(config::PIN_BTN_A) && old && now - last > 3000) {
+    if (!gpio_get(config::PIN_BTN_A) && old && now - last > 300000) {
         old = true;
         last = now;
         return Buttonpress::Short;
