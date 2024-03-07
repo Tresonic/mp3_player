@@ -1,15 +1,20 @@
-add_executable(${CMAKE_PROJECT_NAME}
+add_executable(${CMAKE_PROJECT_NAME})
+
+target_sources(${CMAKE_PROJECT_NAME} PUBLIC
     mp3_player.cpp
-    player.cpp
-    filemanager.cpp
-    audiofile_reader.cpp
-    display.cpp
-    queue.cpp
-    inputhandler.cpp
+    player.cpp player.h
+    filemanager.cpp filemanager.h
+    audiofile_reader.cpp audiofile_reader.h
+    display.cpp display.h
+    queue.cpp queue.h
+    inputhandler.cpp inputhandler.h
     hw_config.c
-    gui.cpp
-    gui_filesystem.cpp
+    i2s_dac.h
 )
+
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC .)
+
+add_subdirectory(gui)
 
 pico_generate_pio_header(${CMAKE_PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/i2s_dac.pio)
 

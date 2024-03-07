@@ -6,7 +6,7 @@
 
 #include "config.h"
 #include "filemanager.h"
-#include "gui.h"
+#include "gui/gui.h"
 #include "pico/multicore.h"
 #include "pico/time.h"
 #include "player.h"

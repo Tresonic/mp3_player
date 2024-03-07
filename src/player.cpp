@@ -72,43 +72,41 @@ int decodeNextFrame() {
 
     mad_stream_buffer(&stream, buf_ptr, FILE_BUFSIZE);
     int rc = mad_frame_decode(&frame, &stream);
-    if (err != -1 && rc == 0) {
-        // std::cout << stream.next_frame - filebuf << " offset\n";
-        audiofile::setUsedBytes(stream.next_frame - buf_ptr);
-        // std::cout << "decoded!!\n";
-        mad_synth_frame(&synth, &frame);
 
-        if (synth.pcm.length > 0) {
-            if (synth.pcm.samplerate != mSampleRate) {
-                mSampleRate = synth.pcm.samplerate;
-                set_pio_frequency(mSampleRate);
-            }
-            // printf("got audio: %i samples; samplerate: %i\n",
-            // (int)synth.pcm.length, (int)mSampleRate);
-            int i = 0;
-
-            if (synth.pcm.channels == 2) {
-                for (int j = 0; j < synth.pcm.length; j++) {
-                    mSampleBuffer[mBufferIdx][i++] =
-                        scale(synth.pcm.samples[0][j]);
-                    mSampleBuffer[mBufferIdx][i++] =
-                        scale(synth.pcm.samples[1][j]);
-                }
-            } else if (synth.pcm.channels == 1) {
-                for (int j = 0; j < synth.pcm.length; j++) {
-                    mSampleBuffer[mBufferIdx][i++] =
-                        scale(synth.pcm.samples[0][j]);
-                    mSampleBuffer[mBufferIdx][i++] =
-                        scale(synth.pcm.samples[0][j]);
-                }
-            } else {
-                printf("unsupported channel number: %i\n",
-                       (int)synth.pcm.channels);
-            }
-        }
-    } else {
+    if (err || rc) {
         printf("%i decode failed!\n", rc);
         return -1;
+    }
+
+    // std::cout << stream.next_frame - filebuf << " offset\n";
+    audiofile::setUsedBytes(stream.next_frame - buf_ptr);
+    // std::cout << "decoded!!\n";
+    mad_synth_frame(&synth, &frame);
+
+    if (synth.pcm.length > 0) {
+        if (synth.pcm.samplerate != mSampleRate) {
+            mSampleRate = synth.pcm.samplerate;
+            set_pio_frequency(mSampleRate);
+        }
+        // printf("got audio: %i samples; samplerate: %i\n",
+        // (int)synth.pcm.length, (int)mSampleRate);
+        int i = 0;
+
+        if (synth.pcm.channels == 2) {
+            for (int j = 0; j < synth.pcm.length; j++) {
+                mSampleBuffer[mBufferIdx][i++] =
+                    scale(synth.pcm.samples[0][j]);
+                mSampleBuffer[mBufferIdx][i++] =
+                    scale(synth.pcm.samples[1][j]);
+            }
+        } else if (synth.pcm.channels == 1) {
+            for (int j = 0; j < synth.pcm.length; j++) {
+                mSampleBuffer[mBufferIdx][i++] =
+                    scale(synth.pcm.samples[0][j]);
+                mSampleBuffer[mBufferIdx][i++] =
+                    scale(synth.pcm.samples[0][j]);
+            }
+        }
     }
     return 1;
 }

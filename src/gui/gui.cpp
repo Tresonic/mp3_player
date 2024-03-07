@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "hardware/timer.h"
-#include "gui_filesystem.h"
+#include "filesystem.h"
 #include "display.h"
 #include "config.h"
 #include "pico/types.h"
