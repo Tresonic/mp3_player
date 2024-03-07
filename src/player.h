@@ -14,6 +14,7 @@ void tick();
 void play(const char *file);
 void togglePause();
 void stop();
+bool isPlaying();
 bool isFinished();
 
 int16_t *getLastFilledBuffer();

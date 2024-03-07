@@ -11,6 +11,7 @@
 #include "pico/types.h"
 #include "filemanager.h"
 #include "player.h"
+#include "gui.h"
 
 namespace gui::filesystem {
 
@@ -18,9 +19,9 @@ namespace gui::filesystem {
     bool newDir = true;
     int listIdx = 0;
     char** fileList;
-    int fileListLen;
+    int fileListLen = 0;
     char** dirList;
-    int dirListLen;
+    int dirListLen = 0;
     char* currentDir;
     char filePath[config::MAX_FILE_PATH_LEN] = { 0 };
     char *BACK_STR = "\x18";
@@ -30,9 +31,6 @@ namespace gui::filesystem {
         fileList = (char**)malloc(config::MAX_FILES_IN_LIST * sizeof(char*));
         dirList = (char**)malloc(config::MAX_FILES_IN_LIST * sizeof(char*));
 
-        fileListLen = 0;
-        dirListLen = 1;
-
         for (int i=0; i<8; ++i) {
             fileList[i] = (char*)malloc(config::MAX_FILE_PATH_LEN);
             dirList[i] = (char*)malloc(config::MAX_FILE_PATH_LEN);
@@ -40,6 +38,10 @@ namespace gui::filesystem {
         }
         currentDir = (char*)malloc(config::MAX_FILE_PATH_LEN);
         strcpy(currentDir, "/");
+    }
+
+    void update() {
+        dirty = true;
     }
 
     void tick() {
@@ -69,7 +71,8 @@ namespace gui::filesystem {
             dirty = true;
         }
 
-        if(inputhandler::get_btn_a() == Buttonpress::Short) {
+        Buttonpress btn_a = inputhandler::get_btn_a();
+        if(btn_a == Buttonpress::Short) {
             if (listIdx == 0 && isSubDir) {
                 // is currently a subdirectory -> first index is back button -> remove last dir
                 for (int i = strlen(currentDir) - 2; i >= 0; i--) {
@@ -92,6 +95,8 @@ namespace gui::filesystem {
                 strcat(filePath, fileList[listIdx - dirListLen - isSubDir]);
                 player::play(filePath);
             }
+        } else if(btn_a == Buttonpress::Long) {
+            gui::setState(gui::Play);
         }
 
         if (dirty) {
