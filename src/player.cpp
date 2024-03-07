@@ -51,9 +51,6 @@ inline static int16_t scale(mad_fixed_t sample) {
 
 void init() {
     init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
-    mad_stream_init(&stream);
-    mad_frame_init(&frame);
-    mad_synth_init(&synth);
 }
 
 void setVol(uint8_t v) {
@@ -174,6 +171,10 @@ void play(const char *file) {
     newSong = true;
     // This function is called from the second core so the current file must be saved and then read from tick() by the first core
     strcpy(curFile, file);
+
+    mad_stream_init(&stream);
+    mad_frame_init(&frame);
+    mad_synth_init(&synth);
 }
 
 void togglePause() {
@@ -191,6 +192,12 @@ void stop() {
     audiofile::close();
     i2s_dac_set_enabled(false);
     finished = true;
+
+    memset(mSampleBuffer, 0, SAMPLE_BUF_NUM * AUDIO_BUFSIZE * sizeof(int16_t));
+
+    mad_stream_finish(&stream);
+    mad_frame_finish(&frame);
+    mad_synth_finish(&synth);
 }
 
 bool isPlaying() { return playing; }
