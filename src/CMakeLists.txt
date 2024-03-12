@@ -2,19 +2,12 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 target_sources(${CMAKE_PROJECT_NAME} PUBLIC
     mp3_player.cpp
-<<<<<<< HEAD
     player.cpp player.h
     filemanager.cpp filemanager.h
     audiofile_reader.cpp audiofile_reader.h
     display.cpp display.h
     queue.cpp queue.h
     inputhandler.cpp inputhandler.h
-=======
-    player.cpp
-    filemanager.cpp
-    audiofile_reader.cpp
-    playlistfile.cpp
->>>>>>> 9d36261 (Add functionality to read playlist files, Add useful queue functions)
     hw_config.c
     i2s_dac.h
 )
