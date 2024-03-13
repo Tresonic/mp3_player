@@ -229,6 +229,15 @@ void print(int x, int y, const char *str) { WriteString(x, y, str); }
 
 void printChar(int x, int y, const char c) { WriteChar(x, y, c); }
 
+void printCustom(int16_t x, int16_t y, const uint8_t *custom,
+                 unsigned int customLen) {
+    int fb_idx = y * 128 + x;
+
+    for (int i = 0; i < customLen; i++) {
+        frameBuffer[fb_idx++] = custom[i];
+    }
+}
+
 void display() {
     render();
     memset(frameBuffer, 0, SSD1306_BUF_LEN);

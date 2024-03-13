@@ -16,6 +16,8 @@ struct render_area {
 RET_TYPE init(const int scl, const int sda);
 void print(int x, int y, const char *str);
 void printChar(int x, int y, const char c);
+void printCustom(int16_t x, int16_t y, const uint8_t *custom,
+                 unsigned int customLen);
 void display();
 
 }
