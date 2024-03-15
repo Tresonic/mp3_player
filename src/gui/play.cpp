@@ -12,11 +12,21 @@
 
 namespace gui::play {
 bool dirty = true;
+bool newFile = true;
 char fileTitle[config::MAX_FILE_PATH_LEN] = {0};
+char fileLength[6] = {0}; // 6 is enough for MM:SS\0 or HH:SS\0
 
 void init() {}
 
 void update() { dirty = true; }
+
+void updateFile() {
+    // TODO theoretically: the file length should only change on a new file
+    // This doesn't yet work for files using variable Bitrate
+
+    dirty = true;
+    newFile = true;
+}
 
 void printPlayPause(bool is_playing) {
 
@@ -56,7 +66,7 @@ void printPlayPause(bool is_playing) {
     }
 }
 
-char *file2title(const char *filePath) {
+void file2title(const char *filePath) {
     char *fileName = strchr(filePath, '/');
     if (fileName) {
         strncpy(fileTitle, fileName + 1, config::MAX_FILE_PATH_LEN);
@@ -69,7 +79,25 @@ char *file2title(const char *filePath) {
     char *extension = strchr(fileTitle, '.');
     if (extension)
         *extension = '\0';
-    return fileTitle;
+}
+
+void length2string(unsigned length) {
+    unsigned hour = 0, min, sec;
+
+    min = length / 60;
+    sec = length - min * 60;
+    if (min >= 60) {
+        hour = min / 60;
+        min -= hour * 60;
+        if (hour > 99)
+            // this will probably just happen on errors
+            // 3 digit hours would overflow fileLength
+            sprintf(fileLength, "00:00");
+        else
+            sprintf(fileLength, "%02d:%02d", hour, min);
+    } else {
+        sprintf(fileLength, "%02d:%02d", min, sec);
+    }
 }
 
 void tick() {
@@ -89,10 +117,18 @@ void tick() {
         gui::setState(gui::List);
     }
 
+    if (newFile) {
+        newFile = false;
+        file2title(player::getFile());
+        length2string(player::getLength());
+    }
+
     if (dirty) {
         dirty = false;
 
-        display::printCentered(8, file2title(player::getFile()));
+        // 8 is the fonts height
+        display::printCentered(8, fileTitle);
+        display::printCentered(4 * 8, fileLength);
 
         printPlayPause(player::isPlaying());
 

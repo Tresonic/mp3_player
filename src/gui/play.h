@@ -5,3 +5,4 @@ namespace gui::play {
     void update();
     void tick();
 }
+void updateFile();

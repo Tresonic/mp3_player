@@ -174,7 +174,7 @@ void play(const char *file) {
 
     newSong = true;
     // update gui
-    gui::play::update();
+    gui::play::updateFile();
 }
 
 void togglePause() {
