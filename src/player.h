@@ -16,6 +16,7 @@ void togglePause();
 void stop();
 bool isPlaying();
 bool isFinished();
+char *getFile();
 
 int16_t *getLastFilledBuffer();
 void usedCurrentBuffer();

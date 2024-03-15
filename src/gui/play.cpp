@@ -1,14 +1,18 @@
 #include "play.h"
 
+#include "config.h"
 #include "display.h"
 #include "gui.h"
 #include "inputhandler.h"
 #include "pico/stdlib.h"
 #include "pico/types.h"
 #include "player.h"
+#include <cstdio>
+#include <cstring>
 
 namespace gui::play {
 bool dirty = true;
+char fileTitle[config::MAX_FILE_PATH_LEN] = {0};
 
 void init() {}
 
@@ -52,6 +56,22 @@ void printPlayPause(bool is_playing) {
     }
 }
 
+char *file2title(const char *filePath) {
+    char *fileName = strchr(filePath, '/');
+    if (fileName) {
+        strncpy(fileTitle, fileName + 1, config::MAX_FILE_PATH_LEN);
+    } else {
+        // This should not be possible
+        strncpy(fileTitle, filePath, config::MAX_FILE_PATH_LEN);
+    }
+
+    // remove extension
+    char *extension = strchr(fileTitle, '.');
+    if (extension)
+        *extension = '\0';
+    return fileTitle;
+}
+
 void tick() {
 
     int rot = inputhandler::get_rot();
@@ -71,6 +91,8 @@ void tick() {
 
     if (dirty) {
         dirty = false;
+
+        display::printCentered(8, file2title(player::getFile()));
 
         printPlayPause(player::isPlaying());
 

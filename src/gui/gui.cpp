@@ -29,25 +29,29 @@ namespace gui {
         }
     }
 
-    void tick() {
-        static unsigned int last = 0;
-        unsigned int now = time_us_32();
+void tick() {
+    static unsigned int last = 0;
+    unsigned int now = time_us_32();
 
-        if (now-last > 100000u) {
-            switch (state) {
-                case List:
-                    if (dirty)
-                        gui::filesystem::update();
-                    gui::filesystem::tick();
-                    break;
-                case Play:
-                    if (dirty)
-                        gui::play::update();
-                    gui::play::tick();
-                    break;
+    if (now - last > 100000u) {
+        switch (state) {
+        case List:
+            if (dirty) {
+                dirty = false;
+                gui::filesystem::update();
             }
+            gui::filesystem::tick();
+            break;
+        case Play:
+            if (dirty) {
+                dirty = false;
+                gui::play::update();
+            }
+            gui::play::tick();
+            break;
         }
     }
+}
 
     void setState(GuiState newState) {
         state = newState;

@@ -9,6 +9,7 @@
 #include "audiofile_reader.h"
 #include "config.h"
 #include "filemanager.h"
+#include "gui/play.h"
 #include "i2s_dac.h"
 #include "pico/platform.h"
 
@@ -33,7 +34,7 @@ static int mSampleRate = 48000;
 static uint8_t vol_idx = count_of(volume_vals) / 2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
-static char curFile[config::MAX_FILE_PATH_LEN];
+static char curFile[config::MAX_FILE_PATH_LEN] = {0};
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
@@ -172,6 +173,8 @@ void play(const char *file) {
     strcpy(curFile, file);
 
     newSong = true;
+    // update gui
+    gui::play::update();
 }
 
 void togglePause() {
@@ -199,6 +202,8 @@ void stop() {
 
 bool isPlaying() { return playing; }
 bool isFinished() { return finished; }
+
+char *getFile() { return curFile; }
 
 float secToMin(unsigned sec) {
     return float(sec / 60) + (sec % 60) / (float)100;

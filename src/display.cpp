@@ -226,6 +226,17 @@ void putpixel(int x, int y, bool b) {
 }
 
 void print(int x, int y, const char *str) { WriteString(x, y, str); }
+void printCentered(int y, const char *str) {
+    int strLen = strlen(str);
+    // 8 is the width of a single character
+    int pad = (SSD1306_WIDTH / 8 - strLen) / 2;
+
+    if (pad < 0)
+        // text doesn't fit
+        pad = 0;
+
+    WriteString(pad * 8, y, str);
+}
 
 void printChar(int x, int y, const char c) { WriteChar(x, y, c); }
 
