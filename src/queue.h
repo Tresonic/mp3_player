@@ -1,5 +1,6 @@
 #pragma once
 
+namespace queue {
 void create_queue();
 
 unsigned int get_queue_index();
@@ -25,5 +26,4 @@ void shuffle_queue();
 void clear_queue_not_index(unsigned int index);
 
 void clear_queue();
-
-void destroy_queue();
+} // namespace queue

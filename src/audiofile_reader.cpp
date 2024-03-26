@@ -25,6 +25,9 @@ static int find_sync(uint8_t *buf, int len) {
 }
 
 int open(const char *path) {
+    if (!path) { // nullptr
+        return 1;
+    }
     file = filemanager::openFile(path);
     if (file < 0) {
         // std::cout << "bad file\n";

@@ -11,6 +11,7 @@
 #include "filemanager.h"
 #include "i2s_dac.h"
 #include "pico/platform.h"
+#include "queue.h"
 
 namespace player {
 
@@ -33,7 +34,6 @@ static int mSampleRate = 48000;
 static uint8_t vol_idx = count_of(volume_vals) / 2;
 static unsigned long long bitrate;
 static unsigned long bitrate_change_counter;
-static char curFile[config::MAX_FILE_PATH_LEN];
 
 /// Scales the sample from internal MAD format to int16
 inline static int16_t scale(mad_fixed_t sample) {
@@ -49,7 +49,10 @@ inline static int16_t scale(mad_fixed_t sample) {
     return sample >> (MAD_F_FRACBITS - 15);
 }
 
-void init() { init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA); }
+void init() {
+    queue::create_queue();
+    init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA);
+}
 
 void setVol(uint8_t v) {
     if (v >= count_of(volume_vals))
@@ -94,17 +97,13 @@ int decodeNextFrame() {
 
         if (synth.pcm.channels == 2) {
             for (int j = 0; j < synth.pcm.length; j++) {
-                mSampleBuffer[mBufferIdx][i++] =
-                    scale(synth.pcm.samples[0][j]);
-                mSampleBuffer[mBufferIdx][i++] =
-                    scale(synth.pcm.samples[1][j]);
+                mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
+                mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[1][j]);
             }
         } else if (synth.pcm.channels == 1) {
             for (int j = 0; j < synth.pcm.length; j++) {
-                mSampleBuffer[mBufferIdx][i++] =
-                    scale(synth.pcm.samples[0][j]);
-                mSampleBuffer[mBufferIdx][i++] =
-                    scale(synth.pcm.samples[0][j]);
+                mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
+                mSampleBuffer[mBufferIdx][i++] = scale(synth.pcm.samples[0][j]);
             }
         }
     }
@@ -125,10 +124,9 @@ void tick() {
         if (!finished) {
             stop();
         }
-        playing = true;
         mBufferIdx = 0;
         mBufferIdxOld = 1;
-        if (audiofile::open(curFile) == -1) {
+        if (audiofile::open(queue::get_cur_queue()) != 0) {
             puts("could not open file");
             return;
         }
@@ -141,12 +139,18 @@ void tick() {
         enforcePlaying();
     }
 
-    if (!playing)
+    if (!playing) {
         return;
-    if (mBufferIdx != mBufferIdxOld) {
+    } else if (!newSong && mBufferIdx != mBufferIdxOld) {
         mBufferIdxOld = mBufferIdx;
         if (decodeNextFrame() == -1) {
-            stop();
+            // song finished (or read corrupted)
+            if (!queue::next_queue_index(true)) {
+                // no new song in queue
+                stop();
+            } else {
+                changeSong();
+            }
         }
 
         bitrate = (bitrate_change_counter == 0) ? getBitrate()
@@ -166,13 +170,7 @@ int16_t *getLastFilledBuffer() { return mSampleBuffer[mBufferIdx]; }
 
 int getLastFilledBufferIdx() { return mBufferIdx; }
 
-void play(const char *file) {
-    // This function is called from the second core so the current file must be
-    // saved and then read from tick() by the first core
-    strcpy(curFile, file);
-
-    newSong = true;
-}
+void changeSong() { newSong = true; }
 
 void togglePause() {
     // this will work if queue is finished. could be disabled by same check as
@@ -186,12 +184,12 @@ void togglePause() {
 }
 
 void stop() {
-    // TODO should probably clear current dac buffer to avoid short playing of
-    // last song when doing pause -> change song -> play
     audiofile::close();
     i2s_dac_set_enabled(false);
     finished = true;
 
+    // clear current dac buffer to avoid short playing of
+    // last song when doing pause -> change song -> play
     memset(mSampleBuffer, 0, SAMPLE_BUF_NUM * AUDIO_BUFSIZE * sizeof(int16_t));
 
     mad_stream_finish(&stream);

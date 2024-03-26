@@ -37,33 +37,19 @@ void serial_ctrl() {
     } else if (c == 'a') {
         // TODO add functionality to restart current song if its after 5sec of
         // current song
-        prev_queue_index();
-        player::stop();
+        queue::prev_queue_index();
+        player::changeSong();
     } else if (c == 'd') {
-        next_queue_index();
-        player::stop();
+        queue::next_queue_index();
+        player::changeSong();
     } else if (c == 's') {
         printf("shuffel\n");
-        shuffle_queue();
+        queue::shuffle_queue();
     }
 }
 
 int main() {
     init();
-<<<<<<< HEAD
-=======
-    // TODO vals to config
-    create_queue();
-
-    char *str1 = "Whenever.mp3";
-    char *str2 = "Creature.mp3";
-
-    // add_to_queue_end(str1);
-    playlistfile::add_to_queue("playlist.m3u");
-    // add_to_queue_at(str2, 0);
-
-    // set_queue_index(1);
->>>>>>> fe8ea8a2b3188429ec985694e20045b0a3853491
 
     puts("init complete");
     while (true) {
@@ -72,7 +58,6 @@ int main() {
     }
 
     filemanager::deinitSd();
-    destroy_queue();
 
     puts("Goodbye, world!");
     getchar();
