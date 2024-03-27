@@ -9,7 +9,6 @@
 
 namespace playlistfile {
 
-// TODO test 10, 1024
 int FILE_BUFSIZE = 1024;
 
 bool add_to_queue(const char *path) {
@@ -32,7 +31,9 @@ bool add_to_queue(const char *path) {
         char *nptr, *ptr = filebuf;
         while (nptr = strchr(ptr, '\n')) {
             nptr[0] = '\0';
-            add_to_queue_end(ptr);
+            // TODO this only works in root directory
+            // TODO support /.../abs and ../.../abc file paths
+            queue::add_to_queue_end(ptr);
             ptr = nptr + 1;
         }
 

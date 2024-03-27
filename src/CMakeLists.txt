@@ -7,6 +7,7 @@ target_sources(${CMAKE_PROJECT_NAME} PUBLIC
     audiofile_reader.cpp audiofile_reader.h
     display.cpp display.h
     queue.cpp queue.h
+    playlistfile.cpp playlistfile.h
     inputhandler.cpp inputhandler.h
     hw_config.c
     i2s_dac.h

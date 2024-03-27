@@ -10,8 +10,11 @@
 #include "inputhandler.h"
 #include "pico/types.h"
 #include "player.h"
+#include "playlistfile.h"
 #include "queue.h"
+
 #include <cstdlib>
+#include <ctype.h>
 
 namespace gui::filesystem {
 
@@ -41,6 +44,34 @@ void init() {
     }
     currentDir = (char *)malloc(config::MAX_FILE_PATH_LEN);
     strcpy(currentDir, "/");
+}
+
+enum EXTENSION { UNKNOWN, MP3, M3U };
+
+enum EXTENSION getExtension(char *str) {
+    // 4 characters without '.' and '\0' should be enough
+    size_t maxExtLen = 4;
+
+    char *tmp = strrchr(str, '.');
+    if (tmp == NULL) {
+        // '.' not found
+        return EXTENSION::UNKNOWN;
+    }
+    char ext[maxExtLen];
+    strncpy(ext, tmp + 1, maxExtLen);
+
+    // to lower
+    for (size_t i = 0; i < maxExtLen; i++) {
+        ext[i] = tolower(ext[i]);
+    }
+
+    if (!strncmp(ext, "mp3", 3)) {
+        return EXTENSION::MP3;
+    } else if (!strncmp(ext, "m3u", 3)) {
+        return EXTENSION::M3U;
+    } else {
+        return EXTENSION::UNKNOWN;
+    }
 }
 
 void tick() {
@@ -81,20 +112,27 @@ void tick() {
                 }
             }
             newDir = true;
-        } else if (listIdx < dirListLen) {
-            // TODO strncpy
+        } else if (listIdx < dirListLen) { // selected is directory
             // substract indexes that might have come before
-            strcat(currentDir, dirList[listIdx - isSubDir]);
-            strcat(currentDir, "/");
+            strncat(currentDir, dirList[listIdx - isSubDir],
+                    config::MAX_FILE_PATH_LEN);
+            strncat(currentDir, "/", config::MAX_FILE_PATH_LEN);
             newDir = true;
-            // TODO check if playlist
         } else {
-            // TODO strncpy
-            strcpy(filePath, currentDir);
+            strncpy(filePath, currentDir, config::MAX_FILE_PATH_LEN);
             // substract indexes that might have come before
-            strcat(filePath, fileList[listIdx - dirListLen - isSubDir]);
-            // TODO should be changed
-            queue::add_to_queue_end(filePath);
+            strncat(filePath, fileList[listIdx - dirListLen - isSubDir],
+                    config::MAX_FILE_PATH_LEN);
+
+            EXTENSION ext = getExtension(filePath);
+
+            // TODO actions should be changed when more buttons are avaiable
+            if (ext == EXTENSION::MP3) { // selected is mp3 file
+                queue::add_to_queue_end(filePath);
+            } else if (ext ==
+                       EXTENSION::M3U) { // selected is playlist(m3u) file
+                playlistfile::add_to_queue(filePath);
+            }
         }
     }
 
