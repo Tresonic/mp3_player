@@ -45,7 +45,7 @@ namespace gui::filesystem {
     void tick() {
         int isSubDir = strcmp(currentDir, "/") != 0;
         // TODO implement scroll (remove %8)
-        int maxListIdx = (dirListLen + fileListLen + isSubDir) % 8;
+        int maxListIdx = (dirListLen + fileListLen + isSubDir);
 
         if (newDir) {
             newDir = false;
@@ -56,6 +56,7 @@ namespace gui::filesystem {
 
         int rot = inputhandler::get_rot();
         if (rot) {
+            printf("%i, %i;  %i\n",maxListIdx, maxListIdx, rot);
             listIdx += rot;
 
             // keep cursor in bounds

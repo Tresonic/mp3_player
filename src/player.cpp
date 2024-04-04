@@ -49,7 +49,7 @@ inline static int16_t scale(mad_fixed_t sample) {
     return sample >> (MAD_F_FRACBITS - 15);
 }
 
-void init() { init_pio(config::PIN_I2S_CLK_BASE, config::PIN_I2S_DATA); }
+void init() { init_pio(config::PIN_I2S_CLK_WS, config::PIN_I2S_DATA); }
 
 void setVol(uint8_t v) {
     if (v >= count_of(volume_vals))

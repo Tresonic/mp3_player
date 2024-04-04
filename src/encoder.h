@@ -63,11 +63,11 @@ void init_encoder() {
 
     gpio_init(config::PIN_ENCODER_A);
     gpio_set_dir(config::PIN_ENCODER_A, GPIO_IN);
-    gpio_pull_up(config::PIN_ENCODER_A);
+    // gpio_pull_up(config::PIN_ENCODER_A);
 
     gpio_init(config::PIN_ENCODER_B);
     gpio_set_dir(config::PIN_ENCODER_B, GPIO_IN);
-    gpio_pull_up(config::PIN_ENCODER_B);
+    // gpio_pull_up(config::PIN_ENCODER_B);
 
     // gpio_set_irq_enabled_with_callback(ENC_SW, GPIO_IRQ_EDGE_FALL, true,
     //                                    &rotary);

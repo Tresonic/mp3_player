@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "hardware/watchdog.h"
+#include "pico/stdio.h"
 #include "pico/stdlib.h"
 
 #include "config.h"
@@ -14,7 +15,10 @@
 
 void init() {
     stdio_init_all();
+    for (int i=0; i<30; ++i) {
     puts("starting");
+    sleep_ms(150);
+    }
 
     filemanager::init();
     puts("filemanager initted");
@@ -45,6 +49,13 @@ void serial_ctrl() {
 }
 
 int main() {
+    // stdio_init_all();
+    // for(int i=0; i<1000; ++i) {
+    //     puts("asfd");
+    //     sleep_ms(100);
+    // }
+    // while (true);
+
     init();
 
     puts("init complete");

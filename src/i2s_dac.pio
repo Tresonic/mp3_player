@@ -39,18 +39,18 @@
 
 
 
-;                           +----- WCLK
-;                           |+---- BCLK
-    set x, 14        side 0b01
+;                           +----- BCLK
+;                           |+---- WCLK
+    set x, 14        side 0b10
 left:
-    out pins, 1      side 0b10
+    out pins, 1      side 0b01
     jmp x--, left    side 0b11
-    out pins, 1      side 0b10
+    out pins, 1      side 0b01
 
     set x, 14        side 0b11
 right:
     out pins, 1      side 0b00
-    jmp x--, right   side 0b01
+    jmp x--, right   side 0b10
     out pins, 1      side 0b00
     ; Loop back to beginning...
 
